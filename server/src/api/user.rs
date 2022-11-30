@@ -2,6 +2,9 @@ use actix_http::HttpMessage;
 use actix_identity::Identity;
 use actix_web::{web, HttpResponse, HttpRequest};
 use serde::{ Serialize, Deserialize };
+use deadpool_postgres::Client;
+use crate::{errors::MyError, models::user};
+use postgres::{Connnection, TlsMode};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Info {
@@ -20,6 +23,13 @@ pub struct User {
         --header 'content-type: application/json' \
         --data '{"username": "bobiscool", "password": "pass"}'
  */
+pub async fn connect() -> HttpResponse {
+    let url = "postgresql://postgres:cse412@localhost/postgres";
+    let conn = Connection::connect(url, TlsMode:None).unwrap();
+    HttpResponse::Ok().body("Connected")
+}
+
+
 pub async fn login(request: HttpRequest, info: web::Json<Info>) -> web::Json<User> {
     let username = info.username.clone();
     println!("[user] - login");
