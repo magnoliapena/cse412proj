@@ -1,8 +1,8 @@
-use std::fmt::{ Display, Formatter, Result as FmtResult };
-use actix_web::{ ResponseError, HttpResponse };
 use actix_web::http::StatusCode;
+use actix_web::{HttpResponse, ResponseError};
 use serde::Serialize;
-use serde_json::{ json, to_string_pretty };
+use serde_json::{json, to_string_pretty};
+use std::fmt::{Display, Formatter, Result as FmtResult};
 
 #[derive(Debug, Serialize)]
 pub struct Error {
@@ -19,8 +19,6 @@ impl Display for Error {
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         let err_json = json!({ "error": self.message });
-        HttpResponse::build(
-            StatusCode::from_u16(self.status).unwrap()
-        ).json(err_json)
+        HttpResponse::build(StatusCode::from_u16(self.status).unwrap()).json(err_json)
     }
 }

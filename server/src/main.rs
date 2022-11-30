@@ -1,12 +1,12 @@
-mod lib;
 mod api;
+mod lib;
+mod model;
+
+use api::class::get_class;
 
 use actix_cors::Cors;
-use actix_identity::IdentityMiddleware;
-use actix_web::{ middleware, web, App, HttpServer, HttpResponse, cookie::{ Key, SameSite } };
-use actix_session::{ SessionMiddleware, storage::CookieSessionStore };
 use actix_web::http::header;
-
+use actix_web::{middleware, middleware::Logger, web, App, HttpResponse, HttpServer};
 
 const ALLOWED_ORIGIN: &str = "http://localhost:3000";
 
@@ -22,7 +22,9 @@ const ALLOWED_ORIGIN: &str = "http://localhost:3000";
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // let private_key = rand::thread_rng().gen::<[u8; 32]>();
-    let private_key = Key::generate();
+    std::env::set_var("RUST_LOG", "debug");
+    std::env::set_var("RUST_BACKTRACE", "1");
+    env_logger::init();
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -33,37 +35,14 @@ async fn main() -> std::io::Result<()> {
             .max_age(3600)
             .supports_credentials();
 
-        App::new()
-            .wrap(IdentityMiddleware::default())
-            .wrap(SessionMiddleware::builder(
-                CookieSessionStore::default(),
-                private_key.clone()
-            )
-                .cookie_http_only(false)
-                .cookie_same_site(SameSite::Lax)
-                .build(),
-            )
-            .wrap(cors)
-            .wrap(middleware::Logger::default())
-            .service(
-                web::scope("/api")
-                    .service(
-                        web::resource("/auth")
-                            .route(web::post().to(api::user::login))
-                            .route(web::delete().to(api::user::logout))
-                    )
-                    .service(
-                        web::scope("/main")
-                            .service(
-                                web::resource("/all")
-                                    .route(web::get().to(api::class_list::get_all))
-                            )
-                    )
-                    .route("/", web::get().to(|| async { HttpResponse::Ok().body("api") }))
-            )
-            .route("/", web::get().to(|| async { HttpResponse::Ok().body("/") } ))
+        let logger: Logger = Logger::default();
+
+        App::new().wrap(logger).wrap(cors).service(get_class).route(
+            "/",
+            web::get().to(|| async { HttpResponse::Ok().body("/") }),
+        )
     })
-        .bind("127.0.0.1:4000")?
-        .run()
-        .await
+    .bind(("127.0.0.1", 4000))?
+    .run()
+    .await
 }
