@@ -1,7 +1,22 @@
 use actix_http::HttpMessage;
 use actix_identity::Identity;
-use actix_web::{web, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
+
+use crate::model::user;
+#[allow(unused_imports)]
+use actix_web::{
+    error::ResponseError,
+    get,
+    http::{header::ContentType, StatusCode},
+    post, put,
+    web::Data,
+    web::Json,
+    web::JsonBody,
+    web::Path,
+    web::Query,
+    HttpResponse,
+    HttpRequest,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Info {
@@ -20,14 +35,14 @@ pub struct User {
        --header 'content-type: application/json' \
        --data '{"username": "bobiscool", "password": "pass"}'
 */
-pub async fn login(request: HttpRequest, info: web::Json<Info>) -> web::Json<User> {
+pub async fn login(request: HttpRequest, info: Json<Info>) -> Json<User> {
     let username = info.username.clone();
     println!("[user] - login");
     println!("[user] - username: {}", username);
 
     //id.remember(username.to_owned());
     Identity::login(&request.extensions(), username.clone().into()).unwrap();
-    web::Json(User { id: username })
+    Json(User { id: username })
 }
 
 /*
@@ -40,5 +55,11 @@ pub async fn logout(id: Identity) -> HttpResponse {
 
     //id.forget();
     id.logout();
+    HttpResponse::Ok().finish()
+}
+
+#[post("/api/user")]
+pub async fn post_user(user_post_request: Json<user::CreateUserRequest> ) -> HttpResponse {
+    println!("{:?}", user_post_request);
     HttpResponse::Ok().finish()
 }

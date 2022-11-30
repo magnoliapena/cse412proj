@@ -8,6 +8,7 @@ use actix_web::{
     post, put,
     web::Data,
     web::Json,
+    web::JsonBody,
     web::Path,
     web::Query,
     HttpResponse,
