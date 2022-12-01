@@ -7,6 +7,7 @@ use actix_web::{ middleware, web, web::Data, App, HttpServer, HttpResponse, cook
 use actix_session::{ SessionMiddleware, storage::CookieSessionStore };
 use actix_web::http::header;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use dotenv::dotenv;
 
 pub struct AppState{
     db: Pool<Postgres>
@@ -27,12 +28,14 @@ const ALLOWED_ORIGIN: &str = "http://localhost:3000";
 async fn main() -> std::io::Result<()> {
     // let private_key = rand::thread_rng().gen::<[u8; 32]>();
     let private_key = Key::generate();
+    dotenv().ok();
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(&database_url)
         .await
         .expect("Failed to create pool");
+    println!("We did a connect!");
 
     HttpServer::new(move || {
         let cors = Cors::default()

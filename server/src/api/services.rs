@@ -1,10 +1,10 @@
 //usage
 use actix_web::{
-    get, pos, web::{Data, Json, Path}, Responder, HttpResponse
+    get, post, web::{Data, Json, Path}, Responder, HttpResponse
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow};
-use crates::AppState;
+use crate::AppState;
 
 //tables
 #[derive(Serialize, FromRow)] //user table
@@ -64,14 +64,15 @@ pub struct CreateUser{
     pub last_name: String,
 
 }
+
 pub struct CreateWaitList{
 
 }
 
 //fn
-pub async fn get_user(state: Date<AppState>) -> impl Responder{
+pub async fn get_user(state: Data<AppState>) -> impl Responder{
     match sqlx::query_as::<_, User>("SELECT * FROM asu_user")
-        .fetch_all(&state.db_pool)
+        .fetch_all(&state.db)
         .await
     {
         Ok(users) => HttpResponse::Ok().json(users),
@@ -80,8 +81,8 @@ pub async fn get_user(state: Date<AppState>) -> impl Responder{
 }
 
 pub async fn get_class(state: Data<AppState>) -> impl Responder{
-    match sqlx::query_as::<_, ClassList>("SELECT classid from class_list")
-        .fetch_all(&state.db_pool)
+    match sqlx::query_as::<_, Class_List>("SELECT classid from class_list")
+        .fetch_all(&state.db)
         .await
     {
         Ok(class) => HttpResponse::Ok().json(class),
@@ -90,8 +91,8 @@ pub async fn get_class(state: Data<AppState>) -> impl Responder{
 }
 
 pub async fn get_waitlist(state: Data<AppState>) -> impl Responder{
-    match sqlx::query_as::<_, WaitList>("SELECT ID from waitlist")
-        .fetch_all(&state.db_pool)
+    match sqlx::query_as::<_, Wish_List>("SELECT ID from waitlist")
+        .fetch_all(&state.db)
         .await
     {
         Ok(waitlist) => HttpResponse::Ok().json(waitlist),
