@@ -29,7 +29,7 @@ struct Class{
     location: String,
     course: String,
     session: String,
-    term: i32
+    term: String
 }
 #[derive(Serialize, FromRow)] //class list table (sub table of classes for a user in wishlist)
 struct ClassList { //hidden table from user
@@ -85,6 +85,7 @@ pub async fn get_user(state: Data<AppState>, path: Path<i32>) -> impl Responder{
     }
 }
 
+
 #[get("/user/{userid}/wishlist")] //get entire class list of a user
 pub async fn get_classlist(state: Data<AppState>, path: Path<i32>) -> impl Responder{
     let userid: i32 = path.into_inner();
@@ -115,13 +116,23 @@ pub async fn get_class(state: Data<AppState>, path: Path<i32>) -> impl Responder
 }
 //might need to add more depending if we use filters (if i need to make a request for specific filter)
 //idk if we're implementing that
-#[get("/class")] //get all classes //general template
+#[get("/classes")] //get all classes //general template
 pub async fn get_all_classes(state: Data<AppState>) -> impl Responder{
-    match sqlx::query_as::<_, Class>("SELECT * FROM class_list")
+    match sqlx::query_as::<_, Class>("SELECT * FROM class")
         .fetch_all(&state.db)
         .await
     {
-        Ok(class) => HttpResponse::Ok().json(class),
+        Ok(classes) => HttpResponse::Ok().json(classes),
+        Err(e) => HttpResponse::NotFound().json("No classes inputted into data"),
+    }
+}
+#[get("/classes/{term}")] // list all classes for a term
+pub async fn get_classes_filterby_term(state: Data<AppState>) -> impl Responder{
+    match sqlx::query_as::<_, Class>("SELECT * FROM class WHERE term = $1")
+        .fetch_all(&state.db)
+        .await
+    {
+        Ok(classes) => HttpResponse::Ok().json(classes),
         Err(e) => HttpResponse::NotFound().json("No classes inputted into data"),
     }
 }
