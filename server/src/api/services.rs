@@ -1,6 +1,6 @@
 //usage
 use actix_web::{
-    get, post, web::{Data, Json, Path}, Responder, HttpResponse
+    get, post, web::{Data, Json, Path}, Result, Responder, HttpResponse
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow};
@@ -194,4 +194,26 @@ pub async fn post_wishlist
         Ok(wishlist) => HttpResponse::Ok().json(wishlist),
         Err(_) => HttpResponse::InternalServerError().json("Failed to create wishlist"),
     }
+}
+
+
+#[derive(Deserialize)]
+struct ClassInfo { // info for class search
+class_name: String,
+    class_cat: String,
+    class_num: String,
+}
+
+#[derive(Serialize)]
+struct ClassSearchInfo { // return from class search
+class_list: Vec<ClassInfo>
+}
+
+pub async fn search_class (info: Json<ClassInfo>) -> Result<Json<ClassSearchInfo>> {
+    let mut vec = Vec::new();
+    let class_one: ClassInfo = ClassInfo { class_name: "computational theory of sucking".parse()?,
+        class_cat: "cse".parse()?,
+        class_num: "69".parse()? };
+    vec.push(class_one);
+    Ok(Json(ClassSearchInfo{class_list: vec}))
 }
