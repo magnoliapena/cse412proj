@@ -37,7 +37,7 @@ pub async fn login(request: HttpRequest, info: web::Json<Info>) -> web::Json<Use
 
 /*
     curl -i --request DELETE \
-        --url http://localhost:4000/api/aith \
+        --url http://localhost:4000/api/auth \
         --header 'content-type: application/json'
  */
 pub async fn logout(id: Identity) -> HttpResponse {
