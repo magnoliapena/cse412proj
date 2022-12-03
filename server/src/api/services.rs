@@ -1,6 +1,10 @@
 //usage
 use crate::AppState;
-use actix_web::{get, post, web::{Data, Json, Path, Query}, HttpResponse, Responder};
+use actix_web::{
+    get, post,
+    web::{Data, Json, Path, Query},
+    HttpResponse, Responder,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow};
 
@@ -212,9 +216,9 @@ pub async fn post_wishlist(
 #[derive(Deserialize)]
 struct ClassInfoRequest {
     // info for class search
-    class_name: String,
-    class_cat: String,
-    class_instructor: String,
+    class_name: Option<String>,
+    class_cat: Option<String>,
+    class_instructor: Option<String>,
 }
 
 #[derive(Serialize, FromRow)]
@@ -227,11 +231,12 @@ struct ClassInfo {
 #[get("/search_class")]
 pub async fn search_class(state: Data<AppState>, info: Query<ClassInfoRequest>) -> impl Responder {
     match sqlx::query_as::<_, ClassInfo>(
-        "SELECT title, course, instructor FROM class WHERE course = $1"
+        "SELECT title, course, instructor FROM class WHERE course = $1",
     )
-        .bind(&info.class_cat)
-        .fetch_all(&state.db)
-        .await {
+    .bind(&info.class_cat)
+    .fetch_all(&state.db)
+    .await
+    {
         Ok(class_search_results) => HttpResponse::Ok().json(class_search_results),
         Err(_) => HttpResponse::NotFound().json("No classes found"),
     }

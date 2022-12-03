@@ -2,17 +2,23 @@ mod utils;
 
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
-use actix_web::{ middleware::Logger, web, web::Data, App, HttpServer,  cookie::{ Key, SameSite } };
-use actix_session::{ SessionMiddleware, storage::CookieSessionStore };
+use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::http::header;
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use actix_web::{
+    cookie::{Key, SameSite},
+    middleware::Logger,
+    web,
+    web::Data,
+    App, HttpServer,
+};
 use dotenv::dotenv;
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 mod api;
-use api::services::{search_class};
+use api::services::search_class;
 
-pub struct AppState{
-    db: Pool<Postgres>
+pub struct AppState {
+    db: Pool<Postgres>,
 }
 
 const ALLOWED_ORIGIN: &str = "http://localhost:3000";
@@ -30,7 +36,7 @@ const ALLOWED_ORIGIN: &str = "http://localhost:3000";
 async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_todo=debug,actix_web=info");
     std::env::set_var("RUST_BACKTRACE", "full");
-    
+
     match env_logger::init() {
         Ok(_) => println!("Logger initialized"),
         Err(_) => println!("Logger could not be initialized"),
@@ -59,26 +65,22 @@ async fn main() -> std::io::Result<()> {
         let logger: Logger = Logger::default();
 
         App::new()
-            .app_data(Data::new(AppState{db: pool.clone()}))
+            .app_data(Data::new(AppState { db: pool.clone() }))
             .wrap(IdentityMiddleware::default())
-            .wrap(SessionMiddleware::builder(
-                CookieSessionStore::default(),
-                private_key.clone()
-            )
-                .cookie_http_only(false)
-                .cookie_same_site(SameSite::Lax)
-                .build(),
+            .wrap(
+                SessionMiddleware::builder(CookieSessionStore::default(), private_key.clone())
+                    .cookie_http_only(false)
+                    .cookie_same_site(SameSite::Lax)
+                    .build(),
             )
             .wrap(cors)
             .wrap(logger)
             //.service(search_class)
-            .service(
-                web::scope("/api").service(search_class)
-            )
+            .service(web::scope("/api").service(search_class))
     })
-        //.bind("127.0.0.1:4000")? // local hosting
-        .bind("0.0.0.0:8080")?
-        .bind("[::1]:8080")?
-        .run()
-        .await
+    //.bind("127.0.0.1:4000")? // local hosting
+    .bind("0.0.0.0:8080")?
+    .bind("[::1]:8080")?
+    .run()
+    .await
 }
