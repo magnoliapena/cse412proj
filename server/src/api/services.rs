@@ -228,6 +228,7 @@ struct ClassInfo {
     instructor: String,
 }
 
+
 #[get("/search_class")]
 pub async fn search_class(state: Data<AppState>, body: Json<ClassInfoRequest>) -> impl Responder {
     match sqlx::query_as::<_, ClassInfo>(

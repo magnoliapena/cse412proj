@@ -2,7 +2,7 @@ mod utils;
 
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
-use actix_web::{ middleware, middleware::Logger, web, web::Data, App, HttpServer, HttpResponse, cookie::{ Key, SameSite } };
+use actix_web::{ middleware::Logger, web, web::Data, App, HttpServer,  cookie::{ Key, SameSite } };
 use actix_session::{ SessionMiddleware, storage::CookieSessionStore };
 use actix_web::http::header;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
@@ -30,7 +30,11 @@ const ALLOWED_ORIGIN: &str = "http://localhost:3000";
 async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_todo=debug,actix_web=info");
     std::env::set_var("RUST_BACKTRACE", "full");
-    env_logger::init();
+    
+    match env_logger::init() {
+        Ok(_) => println!("Logger initialized"),
+        Err(_) => println!("Logger could not be initialized"),
+    }
     // let private_key = rand::thread_rng().gen::<[u8; 32]>();
     let private_key = Key::generate();
     dotenv().ok();
@@ -48,6 +52,7 @@ async fn main() -> std::io::Result<()> {
             .allowed_methods(vec!["GET", "POST", "DELETE"])
             .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
             .allowed_header(header::CONTENT_TYPE)
+            .allowed_origin(ALLOWED_ORIGIN)
             .max_age(3600)
             .supports_credentials();
 
@@ -66,27 +71,13 @@ async fn main() -> std::io::Result<()> {
             )
             .wrap(cors)
             .wrap(logger)
-            .service(search_class)
+            //.service(search_class)
             .service(
-                web::scope("/api")
-                    .service(
-                        web::resource("/auth")
-                            .route(web::post().to(api::user::login))
-                            .route(web::delete().to(api::user::logout))
-                    )
-                    .service(
-                        web::scope("/main")
-                            .service(
-                                web::resource("/all")
-                                    .route(web::get().to(api::class_list::get_all))
-                            )
-                    )
-                    .route("/", web::get().to(|| async { HttpResponse::Ok().body("api") }))
+                web::scope("/api").service(search_class)
             )
-            .route("/", web::get().to(|| async { HttpResponse::Ok().body("/") } ))
     })
         //.bind("127.0.0.1:4000")? // local hosting
-        .bind(("0.0.0.0:8080"))?
+        .bind("0.0.0.0:8080")?
         .bind("[::1]:8080")?
         .run()
         .await
