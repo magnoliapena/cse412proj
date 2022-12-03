@@ -1,10 +1,6 @@
 //usage
 use crate::AppState;
-use actix_web::{
-    get, post,
-    web::{Data, Json, Path},
-    HttpResponse, Responder,
-};
+use actix_web::{get, post, web::{Data, Json, Path, Query}, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow};
 
@@ -221,22 +217,21 @@ struct ClassInfoRequest {
     class_instructor: String,
 }
 
-#[derive(Serialize, FromRow, Debug)]
+#[derive(Serialize, FromRow)]
 struct ClassInfo {
     title: String,
     course: String,
     instructor: String,
 }
 
-
 #[get("/search_class")]
-pub async fn search_class(state: Data<AppState>, body: Json<ClassInfoRequest>) -> impl Responder {
+pub async fn search_class(state: Data<AppState>, info: Query<ClassInfoRequest>) -> impl Responder {
     match sqlx::query_as::<_, ClassInfo>(
         "SELECT title, course, instructor FROM class WHERE course = $1"
     )
-    .bind(body.class_cat.to_string())
-    .fetch_all(&state.db)
-    .await {
+        .bind(&info.class_cat)
+        .fetch_all(&state.db)
+        .await {
         Ok(class_search_results) => HttpResponse::Ok().json(class_search_results),
         Err(_) => HttpResponse::NotFound().json("No classes found"),
     }
