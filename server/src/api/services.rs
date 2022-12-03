@@ -224,9 +224,19 @@ struct ClassInfoRequest {
 
 #[derive(Serialize, FromRow)]
 struct ClassInfo {
+    classid: i32,
     title: String,
+    units: i32,
+    dates: String,
+    status: i32,
+    days: String,
+    starttime: String,
+    endtime: String,
+    instructor: Vec<String>,
+    location: String,
     course: String,
-    instructor: String,
+    session: String,
+    term: i32,
 }
 
 #[get("/search_class")]
@@ -236,7 +246,7 @@ pub async fn search_class(state: Data<AppState>, Query(info): Query<HashMap<Stri
     let iterable_headers: HashMap<String, String> =
         serde_json::from_value(serde_json::to_value(info).unwrap()).unwrap();
 
-    let mut sql_query: String = "SELECT course, title, instructor FROM class WHERE ".to_owned();
+    let mut sql_query: String = "SELECT * FROM class WHERE ".to_owned();
     let mut sql_where: String = "".to_owned();
 
     for value in &iterable_headers {
@@ -255,7 +265,6 @@ pub async fn search_class(state: Data<AppState>, Query(info): Query<HashMap<Stri
     match sqlx::query_as::<_, ClassInfo>(
         &sql_query,
     )
-    //.bind(&info.class_cat)
     .fetch_all(&state.db)
     .await
     {
