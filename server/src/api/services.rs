@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 //usage
 use crate::AppState;
 use actix_web::{
@@ -213,7 +214,7 @@ pub async fn post_wishlist(
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Debug)]
 struct ClassInfoRequest {
     // info for class search
     class_name: Option<String>,
@@ -229,11 +230,32 @@ struct ClassInfo {
 }
 
 #[get("/search_class")]
-pub async fn search_class(state: Data<AppState>, info: Query<ClassInfoRequest>) -> impl Responder {
+pub async fn search_class(state: Data<AppState>, Query(info): Query<HashMap<String, String>>) -> impl Responder {
+    println!("{:?}", info);
+
+    let iterable_headers: HashMap<String, String> =
+        serde_json::from_value(serde_json::to_value(info).unwrap()).unwrap();
+
+    let mut sql_query: String = "SELECT course, title, instructor FROM class WHERE ".to_owned();
+    let mut sql_where: String = "".to_owned();
+
+    for value in &iterable_headers {
+        sql_where.push_str(value.0);
+        sql_where.push_str(" = '");
+        sql_where.push_str(value.1);
+        sql_where.push_str("' AND ");
+    }
+
+    let _ = sql_where.split_off(sql_where.len() - 5);
+
+    sql_query.push_str(&sql_where);
+
+    println!("{}", sql_query);
+
     match sqlx::query_as::<_, ClassInfo>(
-        "SELECT title, course, instructor FROM class WHERE course = $1",
+        &sql_query,
     )
-    .bind(&info.class_cat)
+    //.bind(&info.class_cat)
     .fetch_all(&state.db)
     .await
     {
