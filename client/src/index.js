@@ -8,7 +8,7 @@ import {
 
 import App from './App'
 import Login from './components/Login/Login'
-import Profile, { loader as profileLoader } from './components/Profile/Profile';
+import Profile from './components/Profile/Profile';
 import Info from './components/Profile/Info/Info';
 import Wishlist from './components/Profile/Wishlist/Wishlist';
 import Taken from './components/Profile/Taken/Taken';
@@ -25,20 +25,19 @@ const router = createBrowserRouter([
         element: <Login />
       },
       {
-        path: '/profile/:userId',
+        path: '/profile',
         element: <Profile />,
-        loader: profileLoader,
         children: [
           {
-            path: '/profile/:userId/info',
+            path: '/profile/info',
             element: <Info />
           },
           {
-            path: '/profile/:userId/wishlist',
+            path: '/profile/wishlist',
             element: <Wishlist />
           },
           {
-            path: '/profile/:userId/taken',
+            path: '/profile/taken',
             element: <Taken />
           }
         ]

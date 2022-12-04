@@ -1,23 +1,38 @@
 import './Info.css'
+import useUser from '../../../useUser'
+import { useEffect, useState } from 'react'
 
 const Info = () => {
+  const { user } = useUser()
+  const [data, setData] = useState(null)
+
+  useEffect(() => {
+    const request = {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userid: user.userid })
+    }
+  
+    fetch(`http://localhost:8080/api/user/${user.userid}`, request)
+      .then(response => response.json())
+      .then(data => {
+        setData(data)
+      })
+  }, [])
+
+  console.log(user)
+  console.log(data)
+  
   return (
     <div>
-      <div>picture</div>
-      <p>Firstname Lastname</p>
-      <div className='Row'>
-        <p>Email:</p>
-        <p>email@email.com</p>
-      </div>
       <div className='Row'>
         <p>Location:</p>
-        <p>Tempe</p>
+        <p>{data?.location}</p>
       </div>
       <div className='Row'>
         <p>Major:</p>
-        <p>Computer Science</p>
+        <p>{data?.major}</p>
       </div>
-      <button className='Button'>Edit Profile</button>
     </div>
   )
 }

@@ -1,20 +1,17 @@
-import { Link, Outlet, useLoaderData } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
+import useUser from '../../useUser'
 import './Profile.css'
 
-export async function loader({ params }) {
-  return { userId: params.userId }
-}
-
 const Profile = () => {
-  const data = useLoaderData()
+  const { user } = useUser()
 
   return (
     <div className='Profile'>
-      <h2>@{data.userId}</h2>
+      <h2>@</h2>
       <div className='Row'>
-        <h3><Link className='Profile-Link' to={`/profile/${data.userId}/info`}>Information</Link></h3>
-        <h3><Link className='Profile-Link' to={`/profile/${data.userId}/wishlist`}>Wishlist</Link></h3>
-        <h3><Link className='Profile-Link' to={`/profile/${data.userId}/taken`}>Taken</Link></h3>
+        <h3><Link className='Profile-Link' to={`/profile/info`}>Information</Link></h3>
+        <h3><Link className='Profile-Link' to={`/profile/wishlist`}>Wishlist</Link></h3>
+        <h3><Link className='Profile-Link' to={`/profile/taken`}>Taken</Link></h3>
       </div>
       <Outlet />
     </div>

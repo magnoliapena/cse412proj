@@ -1,10 +1,14 @@
 import './Login.css'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
+import useUser from '../../useUser'
+import { useNavigate } from "react-router-dom"
 
 const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const { setUser } = useUser()
+  const navigate = useNavigate()
 
   const handleSubmit = () => {
     const data = {
@@ -18,9 +22,14 @@ const Login = () => {
       body: JSON.stringify(data)
     }
 
-    fetch('http://localhost:8080/api/login', request)
+    fetch('http://98.161.210.47:8080/api/login', request)
       .then(response => response.json())
-      .then(data => console.log(data))
+      .then(resData => {
+        // const { username, userid } = data
+        console.log(resData)
+        setUser(data)
+        // navigate('/profile/info')
+      })
   }
 
   return (
