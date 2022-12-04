@@ -133,7 +133,7 @@ pub async fn get_all_classes(state: Data<AppState>) -> impl Responder {
         .await
     {
         Ok(classes) => HttpResponse::Ok().json(classes),
-        Err(e) => HttpResponse::NotFound().json("No classes inputted into data"),
+        Err(_) => HttpResponse::NotFound().json("No classes inputted into data"),
     }
 }
 #[get("/classes/{term}")] // list all classes for a term
@@ -188,13 +188,13 @@ pub async fn create_account(
     }
 }
 
-#[derive(Serialize)] //user table
-struct LoginInfo {
+#[derive(Deserialize, Serialize)] //user table
+pub struct LoginInfo {
     userid: String, //pk
     password: String,
 }
 
-#[derive(Deserialize, FromRow)]
+#[derive(Deserialize, Serialize, FromRow)]
 struct LoginResponse {
     username: String,
     userid: String,
@@ -210,7 +210,7 @@ pub async fn login(
     match sqlx::query_as::<_, LoginResponse>(
         "SELECT username, userid, location, major FROM asu_user WHERE username = $1 AND password = $2"
     )
-        .bind(body.username.to_string())
+        .bind(body.userid.to_string())
         .bind(body.password.to_string())
         .fetch_one(&state.db)
         .await
