@@ -13,7 +13,7 @@ use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 mod api;
-use api::services::{create_account, login, search_class, get_required};
+use api::services::{create_account, get_required, login, search_class};
 
 pub struct AppState {
     db: Pool<Postgres>,

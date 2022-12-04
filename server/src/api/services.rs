@@ -7,11 +7,11 @@ use actix_web::{
     web::{Data, Json, Path, Query},
     HttpResponse, Responder,
 };
+use regex::Regex;
 use reqwest::header::AUTHORIZATION;
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow};
 use uuid::Uuid;
-use regex::Regex;
 
 //schemas
 #[derive(Serialize, FromRow)] //class table (contains all classes at ASU)
@@ -280,12 +280,15 @@ pub async fn search_class(
 ) -> impl Responder {
     println!("{:?}", info);
 
+    //split search query into hashmap
     let iterable_headers: HashMap<String, String> =
         serde_json::from_value(serde_json::to_value(info).unwrap()).unwrap();
 
+    //start building out sql query
     let mut sql_query: String = "SELECT * FROM class WHERE ".to_owned();
     let mut sql_where: String = "".to_owned();
 
+    //concat sql conditionals
     for value in &iterable_headers {
         sql_where.push_str(value.0);
         sql_where.push_str(" = '");
@@ -293,12 +296,11 @@ pub async fn search_class(
         sql_where.push_str("' AND ");
     }
 
-    let _ = sql_where.split_off(sql_where.len() - 5);
-
+    let _ = sql_where.split_off(sql_where.len() - 5); //trim loose AND
     sql_query.push_str(&sql_where);
-
     println!("{}", sql_query);
 
+    //query db
     match sqlx::query_as::<_, ClassInfo>(&sql_query)
         .fetch_all(&state.db)
         .await
@@ -309,7 +311,10 @@ pub async fn search_class(
 }
 
 #[get("/required/{term}/{subject}/{number}")]
-pub async fn get_required(state: Data<AppState>, path: Path<(String, String, String)>) -> Result<impl Responder, Box<dyn Error>>  {
+pub async fn get_required(
+    state: Data<AppState>,
+    path: Path<(String, String, String)>,
+) -> Result<impl Responder, Box<dyn Error>> {
     let (term, subject, number) = path.into_inner(); //grab search queries
 
     //build out api url
@@ -333,10 +338,11 @@ pub async fn get_required(state: Data<AppState>, path: Path<(String, String, Str
 
     //regex for prereqs section
     let re = Regex::new(r#"ENROLLREQ":"(.*)","ACAD"#).unwrap();
-    let capture =  re.captures(&resp);
+    let capture = re.captures(&resp);
 
-    match capture { //check if regex found a match
+    match capture {
+        //check if regex found a match
         Some(x) => Ok(HttpResponse::Ok().json(x.get(1).unwrap().as_str())),
-        None => Ok(HttpResponse::NotFound().json("No prereqs found"))
+        None => Ok(HttpResponse::NotFound().json("No prereqs found")),
     }
 }
