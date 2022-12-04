@@ -67,6 +67,7 @@ pub struct CreateWishList {
     pub added_date: String,
 }
 
+
 //USER GET REQUESTS
 #[get("/user/{userid}")] //get single user from id
 pub async fn get_user(state: Data<AppState>, path: Path<i32>) -> impl Responder {
@@ -207,7 +208,7 @@ pub async fn login(state: Data<AppState>, body: Json<LoginInfo>) -> impl Respond
     match sqlx::query_as::<_, LoginResponse>(
         "SELECT username, userid, location, major FROM asu_user WHERE username = $1 AND password = $2"
     )
-        .bind(body.userid.to_string())
+        .bind(body.username.to_string())
         .bind(body.password.to_string())
         .fetch_one(&state.db)
         .await
@@ -217,19 +218,16 @@ pub async fn login(state: Data<AppState>, body: Json<LoginInfo>) -> impl Respond
     }
 }
 
-#[get("/user/{userid}")] //get entire class list of a user
-pub async fn get_classlist(state: Data<AppState>, path: Path<i32>) -> impl Responder {
-    let userid: i32 = path.into_inner();
-    match sqlx::query_as::<_, WishList>(
-        "SELECT * from class_list, wishlist\
-    WHERE wishlist.userid = $1 and wishlist.classlistid = class_list.classlistid",
-    )
-    .fetch_all(&state.db)
-    .await
-    {
-        Ok(wishlist) => HttpResponse::Ok().json(wishlist),
-        Err(_) => HttpResponse::NotFound().json("Wishlist doesn't exist"),
-    }
+#[derive(FromRow, Deserialize, Serialize)]
+pub struct GetClassListId {
+    classlistid: String,
+}
+
+#[derive(Serialize, Deserialize, FromRow)]
+pub struct AddToWishlist {
+    userid: String,
+    classid: i32,
+    term: i32,
 }
 
 #[post("/user/{userid}/wishlist")] //post wishlist
@@ -256,7 +254,7 @@ pub async fn post_wishlist(
     }
 }
 
-#[derive(Serialize, FromRow)]
+#[derive(Serialize, FromRow, Debug)]
 struct ClassInfo {
     classid: i32,
     title: String,

@@ -13,6 +13,7 @@ use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 mod api;
+use api::class_list::{get_wishlist, add_to_wishlist, delete_from_wishlist, get_takenlist, add_to_takenlist};
 use api::services::{create_account, get_required, login, search_class};
 
 pub struct AppState {
@@ -45,12 +46,8 @@ async fn main() -> std::io::Result<()> {
 
     // uses a different database for container or not
     let database_url = match std::env::var("RUST_CONTAINER") {
-        Ok(_) => {
-            std::env::var("DATABASE_URL_CONTAINER").expect("DATABASE_URL_LOCAL must be set")
-        },
-        Err(_) => {
-            std::env::var("DATABASE_URL").expect("DATABASE_URL must be set")
-        }
+        Ok(_) => std::env::var("DATABASE_URL_CONTAINER").expect("DATABASE_URL_LOCAL must be set"),
+        Err(_) => std::env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
     };
 
     println!("database url: {}", database_url);
@@ -87,9 +84,13 @@ async fn main() -> std::io::Result<()> {
             //.service(search_class)
             .service(
                 web::scope("/api")
-                    .service(create_account)
-                    .service(login)
                     .service(search_class)
+                    .service(create_account)
+                    .service(add_to_wishlist)
+                    .service(get_wishlist)
+                    .service(add_to_takenlist)
+                    .service(get_takenlist)
+                    .service(delete_from_wishlist)
                     .service(get_required),
             )
     })
