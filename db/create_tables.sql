@@ -46,7 +46,7 @@ CREATE TABLE wishlist (
 );
  
 
-CREATE TABLE taken (
+CREATE TABLE takenlist (
   UserId text,
   Foreign key (UserId) references asu_user(UserId),
   ClassListId text,
