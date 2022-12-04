@@ -1,0 +1,15 @@
+.Navigation {
+  padding: 20px;
+  background-color: #384051;
+  width: 100vw;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.Navigation-Link {
+  text-decoration: none;
+  color: white;
+  margin-right: 40px;
+  font-size: 24px;
+  font-weight: bold;
+}
