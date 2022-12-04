@@ -1,8 +1,8 @@
 use actix_identity::Identity;
-use actix_web::{ web };
-use serde::{ Serialize, Deserialize };
+use actix_web::web;
+use serde::{Deserialize, Serialize};
 
-use crate::lib::error::Error;
+use crate::utils::error::Error;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Class {
