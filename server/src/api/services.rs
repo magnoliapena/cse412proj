@@ -70,11 +70,11 @@ pub struct CreateWishList {
 
 //USER GET REQUESTS
 #[get("/user/{userid}")] //get single user from id
-pub async fn get_user(state: Data<AppState>, path: Path<i32>) -> impl Responder {
-    let id: i32 = path.into_inner();
+pub async fn get_user(state: Data<AppState>, path: Path<String>) -> impl Responder {
+    let id: String = path.into_inner();
     match sqlx::query_as::<_, User>("SELECT * FROM asu_user WHERE userid = $1")
         .bind(id)
-        .fetch_all(&state.db)
+        .fetch_one(&state.db)
         .await
     {
         Ok(user) => HttpResponse::Ok().json(user),
@@ -170,10 +170,11 @@ struct User {
 //post functions
 #[post("/create_account")] //post user
 pub async fn create_account(state: Data<AppState>, body: Json<CreateUser>) -> impl Responder {
+    println!("attempting account creation as: {} | {} | {} | {} | {}", body.username, body.password, body.email, body.location, body.major);
     let id = Uuid::new_v4();
     match sqlx::query_as::<_, User>(
         "INSERT INTO asu_user (userid, password, username, email, location, major)\
-            VALUES ($1, $2, $3, $4, $5) RETURNING userid, password, username, email, location, major",
+            VALUES ($1, $2, $3, $4, $5, $6) RETURNING userid, password, username, email, location, major",
     )
     .bind(id.to_string())
     .bind(body.password.to_string())
@@ -203,8 +204,9 @@ struct LoginResponse {
     major: String,
 }
 
-#[get("/login")] //post user
+#[post("/login")] //post user
 pub async fn login(state: Data<AppState>, body: Json<LoginInfo>) -> impl Responder {
+    println!("attempting login as: {} | {}", body.username, body.password);
     match sqlx::query_as::<_, LoginResponse>(
         "SELECT username, userid, location, major FROM asu_user WHERE username = $1 AND password = $2"
     )
@@ -214,7 +216,7 @@ pub async fn login(state: Data<AppState>, body: Json<LoginInfo>) -> impl Respond
         .await
     {
         Ok(user) => HttpResponse::Ok().json(user),
-        Err(_) => HttpResponse::InternalServerError().json("Failed to create user"),
+        Err(_) => HttpResponse::InternalServerError().json("Failed to login user"),
     }
 }
 
