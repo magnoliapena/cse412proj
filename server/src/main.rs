@@ -15,7 +15,7 @@ use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 mod api;
-use api::services::search_class;
+use api::services::{search_class, create_account};
 
 pub struct AppState {
     db: Pool<Postgres>,
@@ -76,7 +76,10 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .wrap(logger)
             //.service(search_class)
-            .service(web::scope("/api").service(search_class))
+            .service(web::scope("/api")
+                .service(search_class)
+                .service(create_account)
+            )
     })
     //.bind("127.0.0.1:4000")? // local hosting
     .bind("0.0.0.0:8080")?

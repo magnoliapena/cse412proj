@@ -8,6 +8,7 @@ use actix_web::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow};
+use uuid::Uuid;
 
 //schemas
 #[derive(Serialize, FromRow)] //user table
@@ -66,11 +67,9 @@ struct Requirements {
 
 #[derive(Deserialize)]
 pub struct CreateUser {
-    pub userid: i32,
     pub password: String,
-    pub first_name: String,
-    pub last_name: String,
     pub username: String,
+    pub email: String,
     pub location: String,
     pub major: String,
 }
@@ -165,25 +164,42 @@ pub async fn get_requirements(state: Data<AppState>, path: Path<i32>) -> impl Re
 }
 
 //post functions
-#[post("/user/{userid}")] //post user
-pub async fn post_user(
+#[post("/create_account")] //post user
+pub async fn create_account(
     state: Data<AppState>,
-    path: Path<i32>,
     body: Json<CreateUser>,
 ) -> impl Responder {
-    let id = path.into_inner();
+    let id = Uuid::new_v4();
     match sqlx::query_as::<_, User>(
-        "INSERT INTO asu_user (password, location, username, major)\
-            VALUES ($1, $2, $3, $4, $5) RETURNING userid, password, location, username, major",
+        "INSERT INTO asu_user (userid, password, username, email, location, major)\
+            VALUES ($1, $2, $3, $4, $5) RETURNING userid, password, username, email, location, major",
     )
-    .bind(body.userid.to_string())
+    .bind(id.to_string())
     .bind(body.password.to_string())
-    .bind(body.location.to_string())
     .bind(body.username.to_string())
+    .bind(body.email.to_string())
+    .bind(body.location.to_string())
     .bind(body.major.to_string())
-    .bind(id)
     .fetch_one(&state.db)
     .await
+    {
+        Ok(user) => HttpResponse::Ok().json(user),
+        Err(_) => HttpResponse::InternalServerError().json("Failed to create user"),
+    }
+}
+
+#[get("/login")] //post user
+pub async fn login(
+    state: Data<AppState>,
+    body: Json<CreateUser>,
+) -> impl Responder {
+    match sqlx::query_as::<_, User>(
+        "SELECT userid, location, major FROM asu_user WHERE username = $1 AND password = $2"
+    )
+        .bind(body.username.to_string())
+        .bind(body.password.to_string())
+        .fetch_one(&state.db)
+        .await
     {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(_) => HttpResponse::InternalServerError().json("Failed to create user"),
