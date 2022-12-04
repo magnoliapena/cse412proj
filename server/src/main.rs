@@ -86,6 +86,7 @@ async fn main() -> std::io::Result<()> {
                 web::scope("/api")
                     .service(search_class)
                     .service(create_account)
+                    .service(login)
                     .service(add_to_wishlist)
                     .service(get_wishlist)
                     .service(add_to_takenlist)
