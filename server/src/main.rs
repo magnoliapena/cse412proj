@@ -21,7 +21,7 @@ pub struct AppState {
     db: Pool<Postgres>,
 }
 
-const ALLOWED_ORIGIN: &str = "http://localhost:3000";
+// const ALLOWED_ORIGIN: &str = "http://localhost:3000";
 
 /// extract path info from "/users/{user_id}/{friend}" url
 /// {user_id} - deserializes to a u32
@@ -45,6 +45,7 @@ async fn main() -> std::io::Result<()> {
     let private_key = Key::generate();
     dotenv().ok();
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    println!("database url: {}", database_url);
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(&database_url)
@@ -58,7 +59,7 @@ async fn main() -> std::io::Result<()> {
             .allowed_methods(vec!["GET", "POST", "DELETE"])
             .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
             .allowed_header(header::CONTENT_TYPE)
-            .allowed_origin(ALLOWED_ORIGIN)
+            .allow_any_origin()
             .max_age(3600)
             .supports_credentials();
 
@@ -78,8 +79,7 @@ async fn main() -> std::io::Result<()> {
             //.service(search_class)
             .service(web::scope("/api").service(search_class))
     })
-    //.bind("127.0.0.1:4000")? // local hosting
-    .bind("0.0.0.0:8080")?
+    .bind(("0.0.0.0", 8080))?
     .bind("[::1]:8080")?
     .run()
     .await
