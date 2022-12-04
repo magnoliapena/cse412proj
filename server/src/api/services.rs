@@ -310,8 +310,9 @@ pub async fn search_class(
 
 #[get("/required/{term}/{subject}/{number}")]
 pub async fn get_required(state: Data<AppState>, path: Path<(String, String, String)>) -> Result<impl Responder, Box<dyn Error>>  {
-    let (term, subject, number) = path.into_inner();
+    let (term, subject, number) = path.into_inner(); //grab search queries
 
+    //build out api url
     let mut url: String = "https://eadvs-cscc-catalog-api.apps.asu.edu/catalog-microservices/api/v1/search/courses?refine=Y".to_owned();
     url.push_str("&term=");
     url.push_str(&*term);
@@ -320,7 +321,7 @@ pub async fn get_required(state: Data<AppState>, path: Path<(String, String, Str
     url.push_str("&catalogNbr=");
     url.push_str(&*number);
 
-
+    //reqwest get w/ necessary auth header
     let client = reqwest::Client::new();
     let resp = client
         .get(url)
@@ -330,10 +331,12 @@ pub async fn get_required(state: Data<AppState>, path: Path<(String, String, Str
         .text()
         .await?;
 
-    println!("{}", resp);
-    // let re = Regex::new(r#"Prerequisite(s): (.*)","ACADGROUP"#).unwrap();
-    // let capture =  re.captures(&resp).unwrap();
-    // println!("{}", capture.get(1).unwrap().as_str());
+    //regex for prereqs section
+    let re = Regex::new(r#"ENROLLREQ":"(.*)","ACAD"#).unwrap();
+    let capture =  re.captures(&resp);
 
-    Ok(HttpResponse::Ok())
+    match capture { //check if regex found a match
+        Some(x) => Ok(HttpResponse::Ok().json(x.get(1).unwrap().as_str())),
+        None => Ok(HttpResponse::NotFound().json("No prereqs found"))
+    }
 }
