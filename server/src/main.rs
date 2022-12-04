@@ -42,7 +42,17 @@ async fn main() -> std::io::Result<()> {
     // let private_key = rand::thread_rng().gen::<[u8; 32]>();
     let private_key = Key::generate();
     dotenv().ok();
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    // uses a different database for container or not
+    let database_url = match std::env::var("RUST_CONTAINER") {
+        Ok(_) => {
+            std::env::var("DATABASE_URL_CONTAINER").expect("DATABASE_URL_LOCAL must be set")
+        },
+        Err(_) => {
+            std::env::var("DATABASE_URL").expect("DATABASE_URL must be set")
+        }
+    };
+
     println!("database url: {}", database_url);
     let pool = PgPoolOptions::new()
         .max_connections(5)

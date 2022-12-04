@@ -207,7 +207,7 @@ pub async fn login(state: Data<AppState>, body: Json<LoginInfo>) -> impl Respond
     match sqlx::query_as::<_, LoginResponse>(
         "SELECT username, userid, location, major FROM asu_user WHERE username = $1 AND password = $2"
     )
-        .bind(body.username.to_string())
+        .bind(body.userid.to_string())
         .bind(body.password.to_string())
         .fetch_one(&state.db)
         .await

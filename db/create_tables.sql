@@ -1,38 +1,40 @@
 CREATE TABLE asu_user (
   UserId text PRIMARY KEY,
-  Password text,
-  Location text,
   Username text,
+  Password text,
+  Email text,
+  Location text,
   Major text
 );
 
 CREATE TABLE class (
-  ClassId integer,
-  Title text,
-  Units integer,
-  Dates text,
-  Status integer,
-  Days text,
-  StartTime text,
-  EndTime text,
-  Instructor text[],
-  Location text,
-  Course text,
-  Session text,
-  Term integer,
-  primary key(ClassId, Term)
+    ClassId integer,
+    Title text,
+    Units integer,
+    Dates text,
+    Status integer,
+    Days text,
+    StartTime text,
+    EndTime text,
+    Instructor text[],
+    Location text,
+    Course text,
+    Session text,
+    Term integer,
+    primary key(ClassId, Term)
 );
 
 CREATE TABLE wishlist (
   UserId text,
   ClassListId text,
-  PriorityRanking int,
+  PriorityRanking integer,
   AddedDate date
 );
  
 CREATE TABLE class_list (
   ClassListId text PRIMARY KEY,
-  Semester text
+  classes text[],
+  term integer
 );
 
 CREATE TABLE taken (
