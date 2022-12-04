@@ -23,10 +23,6 @@ const Info = () => {
   return (
     <div>
       <div className='Row'>
-        <p>Email:</p>
-        <p>{data?.email}</p>
-      </div>
-      <div className='Row'>
         <p>Location:</p>
         <p>{data?.location}</p>
       </div>
