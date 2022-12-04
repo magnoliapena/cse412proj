@@ -244,6 +244,7 @@ pub async fn post_wishlist(
     }
 }
 
+
 #[derive(Serialize, FromRow)]
 struct ClassInfo {
     classid: i32,
