@@ -15,7 +15,8 @@ use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 mod api;
-use api::services::{get_wishlist, add_to_takenlist, add_to_wishlist, create_account, search_class};
+use api::class_list::{get_wishlist, add_to_wishlist, delete_from_wishlist, get_takenlist, add_to_takenlist};
+use api::services::{create_account, search_class};
 
 pub struct AppState {
     db: Pool<Postgres>,
@@ -86,10 +87,12 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                     .service(search_class)
-                    .service(add_to_wishlist)
                     .service(create_account)
+                    .service(add_to_wishlist)
                     .service(get_wishlist)
                     .service(add_to_takenlist)
+                    .service(get_takenlist)
+                    .service(delete_from_wishlist)
             )
     })
     .bind(("0.0.0.0", 8080))?

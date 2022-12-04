@@ -82,6 +82,7 @@ pub struct CreateWishList {
     pub added_date: String,
 }
 
+
 //USER GET REQUESTS
 #[get("/user/{userid}")] //get single user from id
 pub async fn get_user(state: Data<AppState>, path: Path<i32>) -> impl Responder {
@@ -224,123 +225,6 @@ pub struct AddToWishlist {
     userid: String,
     classid: i32,
     term: i32,
-}
-
-#[post("/user/add_to_wishlist")] // adds a class to wishlist
-pub async fn add_to_wishlist(state: Data<AppState>, body: Json<AddToWishlist>) -> impl Responder {
-    // queries the user for their wishlist related classlist and gets it's id
-    let sql_query =
-        sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM wishlist WHERE userid = $1;")
-            .bind(body.userid.to_string());
-
-    match sql_query.fetch_one(&state.db).await {
-        Ok(result) => {
-            let class_list_id: GetClassListId = result;
-
-            // inserts the class into the wishlist's classlist
-            match sqlx::query(
-                "INSERT INTO class_list_relationship (ClassListId, ClassId, Term) VALUES ($1, $2, $3);",
-            )
-            .bind(class_list_id.classlistid.to_string())
-            .bind(body.classid)
-            .bind(body.term)
-            .execute(&state.db)
-            .await
-            {
-                Ok(_) => HttpResponse::Ok().json("ok"),
-                Err(e) => {
-                    println!("{}", e);
-                    HttpResponse::InternalServerError().json("Failed to add to wishlist")
-                }
-            }
-        }
-        Err(_) => HttpResponse::InternalServerError().json("Failed to get classlistid"),
-    }
-}
-
-#[derive(Deserialize)]
-pub struct UserId {
-    userid: String,
-}
-
-#[get("/user/get_wishlist")]
-pub async fn get_wishlist(state: Data<AppState>, body: Json<UserId>) -> impl Responder {
-    let sql_query =
-        sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM wishlist WHERE userid = $1;")
-            .bind(body.userid.to_string());
-
-    match sql_query.fetch_one(&state.db).await {
-        Ok(result) => {
-            let class_list_id: GetClassListId = result;
-            println!("classlistid: {}", class_list_id.classlistid);
-            match sqlx::query_as::<_, ClassInfo>("SELECT * FROM class, class_list_relationship WHERE class_list_relationship.ClassListId = $1 AND class.ClassId=class_list_relationship.ClassId AND class.Term=class_list_relationship.Term;").bind(class_list_id.classlistid.to_string()).fetch_all(&state.db).await {
-                Ok(wishlist) => {
-                    HttpResponse::Ok().json(wishlist)
-                },
-                Err(e) => {
-                    println!("{}", e);
-                    HttpResponse::InternalServerError().json("Failed to get wishlist 2")
-                }
-            }
-        }
-        Err(_) => HttpResponse::InternalServerError().json("Failed to add to wishlist")
-    }
-}
-
-#[post("/user/add_to_takenlist")] // adds a class to taken list
-pub async fn add_to_takenlist(state: Data<AppState>, body: Json<AddToWishlist>) -> impl Responder {
-    // queries the user for their takenlist related classlist and gets it's id
-    let sql_query =
-        sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM takenlist WHERE userid = $1;")
-            .bind(body.userid.to_string());
-
-    match sql_query.fetch_one(&state.db).await {
-        Ok(result) => {
-            let class_list_id: GetClassListId = result;
-
-            // inserts the class into the takenlist's classlist
-            match sqlx::query(
-                "INSERT INTO class_list_relationship (ClassListId, ClassId, Term) VALUES ($1, $2, $3);",
-            )
-            .bind(class_list_id.classlistid.to_string())
-            .bind(body.classid)
-            .bind(body.term)
-            .execute(&state.db)
-            .await
-            {
-                Ok(_) => HttpResponse::Ok().json("ok"),
-                Err(e) => {
-                    println!("{}", e);
-                    HttpResponse::InternalServerError().json("Failed to add to takenlist")
-                }
-            }
-        }
-        Err(_) => HttpResponse::InternalServerError().json("Failed to get classlistid"),
-    }
-}
-
-#[get("/user/get_takenlist")]
-pub async fn get_takenlist(state: Data<AppState>, body: Json<UserId>) -> impl Responder {
-    let sql_query =
-        sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM takenlist WHERE userid = $1;")
-            .bind(body.userid.to_string());
-
-    match sql_query.fetch_one(&state.db).await {
-        Ok(result) => {
-            let class_list_id: GetClassListId = result;
-            println!("classlistid: {}", class_list_id.classlistid);
-            match sqlx::query_as::<_, ClassInfo>("SELECT * FROM class, class_list_relationship WHERE class_list_relationship.ClassListId = $1 AND class.ClassId=class_list_relationship.ClassId AND class.Term=class_list_relationship.Term;").bind(class_list_id.classlistid.to_string()).fetch_all(&state.db).await {
-                Ok(takenlist) => {
-                    HttpResponse::Ok().json(takenlist)
-                },
-                Err(e) => {
-                    println!("{}", e);
-                    HttpResponse::InternalServerError().json("Failed to get takenlist 2")
-                }
-            }
-        }
-        Err(_) => HttpResponse::InternalServerError().json("Failed to add to takenlist")
-    }
 }
 
 #[post("/user/{userid}/wishlist")] //post wishlist
