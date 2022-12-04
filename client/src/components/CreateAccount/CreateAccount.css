@@ -1,0 +1,21 @@
+.CreateAccount .Column:first-child {
+  margin-right: 40px;
+}
+
+.CreateAccount .Button:last-child {
+  margin-top: 20px;
+  align-self: center;
+}
+
+.CreateAccount > * {
+  margin-bottom: 20px;
+}
+
+.CreateAccount {
+  margin-top: 10vh;
+}
+
+.CreateAccount h1 {
+  margin-bottom: 60px;
+  margin-top: 0px;
+}

@@ -16,4 +16,33 @@
 .Row {
   display: flex;
   flex-direction: row;
+  align-items: center;
+}
+
+.TextInput {
+  font-size: 18px;
+  border-radius: 8px;
+  padding: 8px;
+  border: none;
+  margin-top: 8px;
+}
+
+.Button {
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: none;
+  padding: 8px;
+  max-width: fit-content;
+}
+
+.Center {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  justify-content: center;
+}
+
+.Link {
+  text-decoration: none;
 }

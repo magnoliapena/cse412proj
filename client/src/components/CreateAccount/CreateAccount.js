@@ -2,43 +2,40 @@ import './CreateAccount.css'
 
 const CreateAccount = () => {
   return (
-    <div>
+    <div className='CreateAccount'>
       <h1>Create Account</h1>
       <div className='Row'>
         <div className="Column">
-          <label>First Name</label>
-          <input />
-        </div>
-        <div className="Column">
-          <label>Last Name</label>
-          <input />
-        </div>
-      </div>
-      <div className='Row'>
-        <div className="Column">
           <label>Username</label>
-          <input />
+          <input className='TextInput' />
         </div>
         <div className="Column">
           <label>Password</label>
-          <input />
+          <input className='TextInput' type='password' />
         </div>
       </div>
       <div className='Row'>
         <div className="Column">
           <label>Email</label>
-          <input />
+          <input className='TextInput' />
         </div>
         <div className="Column">
           <label>Major</label>
-          <input />
+          <input className='TextInput' />
         </div>
       </div>
       <div className="Column">
         <label>Location</label>
-        <select />
+        <select className='TextInput'>
+          <option>Select Location</option>
+          <option>Tempe</option>
+          <option>West</option>
+          <option>Polytechnic</option>
+          <option>Downtown Phoenix</option>
+          <option>Online</option>
+        </select>
       </div>
-      <button>Create Account</button>
+      <button className='Button'>Create Account</button>
     </div>
   )
 }

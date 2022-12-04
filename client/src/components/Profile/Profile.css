@@ -1,0 +1,17 @@
+.Profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 100vw;
+  padding-left: 30vw;
+}
+
+.Profile-Link {
+  text-decoration: none;
+  color: azure;
+  margin-right: 40px;
+}
+
+.Profile-Link-active {
+  text-decoration: underline;
+}

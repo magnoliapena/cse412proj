@@ -1,0 +1,23 @@
+.Search {
+  display: flex;
+  flex-direction: column;
+  min-width: 100vw;
+  align-items: flex-start;
+  padding-left: 30vw;
+}
+
+.Search * {
+  margin-right: 20px;
+}
+
+.Search .TextInput {
+  width: 200px;
+}
+
+.Search .Column {
+  width: 250px;
+}
+
+.Search .Row {
+  margin: 10px 0px;
+}

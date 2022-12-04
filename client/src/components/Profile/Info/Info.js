@@ -4,20 +4,20 @@ const Info = () => {
   return (
     <div>
       <div>picture</div>
-      <h3>Firstname Lastname</h3>
+      <p>Firstname Lastname</p>
       <div className='Row'>
-        <h3>Email:</h3>
-        <h3>email@email.com</h3>
+        <p>Email:</p>
+        <p>email@email.com</p>
       </div>
       <div className='Row'>
-        <h3>Location:</h3>
-        <h3>Tempe</h3>
+        <p>Location:</p>
+        <p>Tempe</p>
       </div>
       <div className='Row'>
-        <h3>Major:</h3>
-        <h3>Computer Science</h3>
+        <p>Major:</p>
+        <p>Computer Science</p>
       </div>
-      <button>Edit Profile</button>
+      <button className='Button'>Edit Profile</button>
     </div>
   )
 }

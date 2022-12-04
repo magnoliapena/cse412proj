@@ -6,17 +6,23 @@ const Wishlist = () => {
   const data = useMemo(
     () => [
       {
-        col1: 'Hello',
-        col2: 'World',
+        course: 'AAA101',
+        title: 'Lost Civilizations',
+        number: '222222',
+        seats: '0 out of 24'
       },
       {
-        col1: 'react-table',
-        col2: 'rocks',
+        course: 'AAA101',
+        title: 'Lost Civilizations',
+        number: '222222',
+        seats: '0 out of 24'
       },
       {
-        col1: 'whatever',
-        col2: 'you want',
-      },
+        course: 'AAA101',
+        title: 'Lost Civilizations',
+        number: '222222',
+        seats: '0 out of 24'
+      }
     ],
     []
   )
@@ -24,13 +30,21 @@ const Wishlist = () => {
   const columns = useMemo(
     () => [
       {
-        Header: 'Column 1',
-        accessor: 'col1', // accessor is the "key" in the data
+        Header: 'Course',
+        accessor: 'course', // accessor is the "key" in the data
       },
       {
-        Header: 'Column 2',
-        accessor: 'col2',
+        Header: 'Title',
+        accessor: 'title',
       },
+      {
+        Header: 'Number',
+        accessor: 'number',
+      },
+      {
+        Header: 'Open Seats',
+        accessor: 'seats',
+      }
     ],
     []
   )
@@ -44,7 +58,7 @@ const Wishlist = () => {
   } = useTable({ columns, data })
 
   return (
-    <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
+    <table {...getTableProps()} style={{"overflow": "hidden"}}>
       <thead>
         {headerGroups.map(headerGroup => (
           <tr {...headerGroup.getHeaderGroupProps()}>
@@ -52,10 +66,8 @@ const Wishlist = () => {
               <th
                 {...column.getHeaderProps()}
                 style={{
-                  borderBottom: 'solid 3px red',
-                  background: 'aliceblue',
-                  color: 'black',
-                  fontWeight: 'bold',
+                  borderBottom: 'solid 0px white',
+                  paddingBottom: '20px'
                 }}
               >
                 {column.render('Header')}
@@ -74,12 +86,12 @@ const Wishlist = () => {
                   <td
                     {...cell.getCellProps()}
                     style={{
-                      padding: '10px',
-                      border: 'solid 1px gray',
-                      background: 'papayawhip',
+                      padding: '20px',
+                      borderBottom: '0px solid white'
                     }}
                   >
                     {cell.render('Cell')}
+                    <div style={{"width": "200%", "height": "1px", "backgroundColor": "white", "marginTop": "40px"}} />
                   </td>
                 )
               })}
