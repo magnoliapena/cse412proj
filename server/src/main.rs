@@ -1,5 +1,3 @@
-mod utils;
-
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};

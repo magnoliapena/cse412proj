@@ -118,7 +118,7 @@ pub async fn get_all_classes(state: Data<AppState>) -> impl Responder {
         .await
     {
         Ok(classes) => HttpResponse::Ok().json(classes),
-        Err(e) => HttpResponse::NotFound().json("No classes inputted into data"),
+        Err(_) => HttpResponse::NotFound().json("No classes inputted into data"),
     }
 }
 #[get("/classes/{term}")] // list all classes for a term
@@ -188,9 +188,9 @@ pub async fn create_account(state: Data<AppState>, body: Json<CreateUser>) -> im
     }
 }
 
-#[derive(Deserialize)] //user table
-struct LoginInfo {
-    username: String, //pk
+#[derive(Deserialize)]
+pub struct LoginInfo {
+    username: String,
     password: String,
 }
 
