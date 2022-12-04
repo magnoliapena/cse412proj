@@ -10,15 +10,18 @@ const Info = () => {
     const request = {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userid: user.userId })
+      body: JSON.stringify({ userid: user.userid })
     }
   
-    fetch(`http://localhost:8080/api/user/${user.userId}`, request)
+    fetch(`http://localhost:8080/api/user/${user.userid}`, request)
       .then(response => response.json())
       .then(data => {
         setData(data)
       })
   }, [])
+
+  console.log(user)
+  console.log(data)
   
   return (
     <div>

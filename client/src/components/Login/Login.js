@@ -17,17 +17,18 @@ const Login = () => {
     }
 
     const request = {
-      method: 'GET',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     }
 
-    fetch('http://localhost:8080/api/login', request)
+    fetch('http://98.161.210.47:8080/api/login', request)
       .then(response => response.json())
-      .then(data => {
-        const { username, userid } = data
-        setUser({ username, userId: userid })
-        navigate('/profile/info')
+      .then(resData => {
+        // const { username, userid } = data
+        console.log(resData)
+        setUser(data)
+        // navigate('/profile/info')
       })
   }
 

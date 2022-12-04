@@ -13,7 +13,7 @@ const CreateAccount = () => {
   const navigate = useNavigate()
 
   const handleSubmit = () => {
-    const data = {
+    const formData = {
       username,
       password,
       email,
@@ -24,17 +24,17 @@ const CreateAccount = () => {
     const request = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify(formData)
     }
 
-    fetch('http://localhost:8080/api/create_account', request)
+    fetch('http://98.161.210.47:8080/api/create_account', request)
       .then(response => response.json())
-      .then(data => {
-        const { username, userid } = data
-        setUser({ username, userId: userid })
-        navigate('/profile/info')
+      .then(resData => {
+        console.log(resData);
+        // const { username, userid } = data
+        setUser(resData)
+        // navigate('/profile/info')
       })
-
   }
 
   return (
