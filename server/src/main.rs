@@ -1,5 +1,3 @@
-mod utils;
-
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
@@ -16,7 +14,7 @@ use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 mod api;
 use api::class_list::{get_wishlist, add_to_wishlist, delete_from_wishlist, get_takenlist, add_to_takenlist};
-use api::services::{create_account, search_class};
+use api::services::{create_account, get_required, login, search_class};
 
 pub struct AppState {
     db: Pool<Postgres>,
@@ -93,6 +91,7 @@ async fn main() -> std::io::Result<()> {
                     .service(add_to_takenlist)
                     .service(get_takenlist)
                     .service(delete_from_wishlist)
+                    .service(get_required),
             )
     })
     .bind(("0.0.0.0", 8080))?
