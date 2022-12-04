@@ -1,19 +1,26 @@
-mod lib;
-mod api;
-
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
-use actix_web::{ middleware, web, web::Data, App, HttpServer, HttpResponse, cookie::{ Key, SameSite } };
-use actix_session::{ SessionMiddleware, storage::CookieSessionStore };
+use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::http::header;
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use actix_web::{
+    cookie::{Key, SameSite},
+    middleware::Logger,
+    web,
+    web::Data,
+    App, HttpServer,
+};
 use dotenv::dotenv;
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
-pub struct AppState{
-    db: Pool<Postgres>
+mod api;
+use api::class_list::{get_wishlist, add_to_wishlist, delete_from_wishlist, get_takenlist, add_to_takenlist};
+use api::services::{create_account, get_required, login, search_class};
+
+pub struct AppState {
+    db: Pool<Postgres>,
 }
 
-const ALLOWED_ORIGIN: &str = "http://localhost:3000";
+// const ALLOWED_ORIGIN: &str = "http://localhost:3000";
 
 /// extract path info from "/users/{user_id}/{friend}" url
 /// {user_id} - deserializes to a u32
@@ -26,10 +33,24 @@ const ALLOWED_ORIGIN: &str = "http://localhost:3000";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    std::env::set_var("RUST_LOG", "actix_todo=debug,actix_web=info");
+    std::env::set_var("RUST_BACKTRACE", "full");
+
+    match env_logger::init() {
+        Ok(_) => println!("Logger initialized"),
+        Err(_) => println!("Logger could not be initialized"),
+    }
     // let private_key = rand::thread_rng().gen::<[u8; 32]>();
     let private_key = Key::generate();
     dotenv().ok();
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    // uses a different database for container or not
+    let database_url = match std::env::var("RUST_CONTAINER") {
+        Ok(_) => std::env::var("DATABASE_URL_CONTAINER").expect("DATABASE_URL_LOCAL must be set"),
+        Err(_) => std::env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
+    };
+
+    println!("database url: {}", database_url);
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(&database_url)
@@ -39,45 +60,41 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin(ALLOWED_ORIGIN)
+            .allow_any_origin()
             .allowed_methods(vec!["GET", "POST", "DELETE"])
             .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
             .allowed_header(header::CONTENT_TYPE)
+            .allow_any_origin()
             .max_age(3600)
             .supports_credentials();
 
+        let logger: Logger = Logger::default();
+
         App::new()
-            .app_data(Data::new(AppState{db: pool.clone()}))
+            .app_data(Data::new(AppState { db: pool.clone() }))
             .wrap(IdentityMiddleware::default())
-            .wrap(SessionMiddleware::builder(
-                CookieSessionStore::default(),
-                private_key.clone()
-            )
-                .cookie_http_only(false)
-                .cookie_same_site(SameSite::Lax)
-                .build(),
+            .wrap(
+                SessionMiddleware::builder(CookieSessionStore::default(), private_key.clone())
+                    .cookie_http_only(false)
+                    .cookie_same_site(SameSite::Lax)
+                    .build(),
             )
             .wrap(cors)
-            .wrap(middleware::Logger::default())
+            .wrap(logger)
+            //.service(search_class)
             .service(
                 web::scope("/api")
-                    .service(
-                        web::resource("/auth")
-                            .route(web::post().to(api::user::login))
-                            .route(web::delete().to(api::user::logout))
-                    )
-                    .service(
-                        web::scope("/main")
-                            .service(
-                                web::resource("/all")
-                                    .route(web::get().to(api::class_list::get_all))
-                            )
-                    )
-                    .route("/", web::get().to(|| async { HttpResponse::Ok().body("api") }))
+                    .service(search_class)
+                    .service(create_account)
+                    .service(add_to_wishlist)
+                    .service(get_wishlist)
+                    .service(add_to_takenlist)
+                    .service(get_takenlist)
+                    .service(delete_from_wishlist)
+                    .service(get_required),
             )
-            .route("/", web::get().to(|| async { HttpResponse::Ok().body("/") } ))
     })
-        .bind("127.0.0.1:4000")?
-        .run()
-        .await
+    .bind(("0.0.0.0", 8080))?
+    .run()
+    .await
 }
