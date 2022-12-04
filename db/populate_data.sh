@@ -1,0 +1,6 @@
+echo "adding classes..."
+psql -d docker -q -c "copy class from '/var/lib/tabledata/classes.csv' with delimiter as '|' NULL '';"
+echo "running test...result should be 1000, 100, and 100"
+psql -d docker -q -c "SELECT count(*) FROM asu_user;"
+psql -d docker -q -c "SELECT count(*) FROM class;"
+psql -d docker -q -c "SELECT count(*) FROM class_list;"
