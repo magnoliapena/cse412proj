@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::error::Error;
 //usage
 use crate::AppState;
 use actix_web::{
@@ -6,9 +7,11 @@ use actix_web::{
     web::{Data, Json, Path, Query},
     HttpResponse, Responder,
 };
+use reqwest::header::AUTHORIZATION;
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow};
 use uuid::Uuid;
+use regex::Regex;
 
 //schemas
 #[derive(Serialize, FromRow)] //class table (contains all classes at ASU)
@@ -165,10 +168,7 @@ struct User {
 
 //post functions
 #[post("/create_account")] //post user
-pub async fn create_account(
-    state: Data<AppState>,
-    body: Json<CreateUser>,
-) -> impl Responder {
+pub async fn create_account(state: Data<AppState>, body: Json<CreateUser>) -> impl Responder {
     let id = Uuid::new_v4();
     match sqlx::query_as::<_, User>(
         "INSERT INTO asu_user (userid, password, username, email, location, major)\
@@ -188,13 +188,13 @@ pub async fn create_account(
     }
 }
 
-#[derive(Serialize)] //user table
+#[derive(Deserialize)] //user table
 struct LoginInfo {
-    userid: String, //pk
+    username: String, //pk
     password: String,
 }
 
-#[derive(Deserialize, FromRow)]
+#[derive(Serialize, FromRow)]
 struct LoginResponse {
     username: String,
     userid: String,
@@ -203,10 +203,7 @@ struct LoginResponse {
 }
 
 #[get("/login")] //post user
-pub async fn login(
-    state: Data<AppState>,
-    body: Json<LoginInfo>,
-) -> impl Responder {
+pub async fn login(state: Data<AppState>, body: Json<LoginInfo>) -> impl Responder {
     match sqlx::query_as::<_, LoginResponse>(
         "SELECT username, userid, location, major FROM asu_user WHERE username = $1 AND password = $2"
     )
@@ -217,6 +214,21 @@ pub async fn login(
     {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(_) => HttpResponse::InternalServerError().json("Failed to create user"),
+    }
+}
+
+#[get("/user/{userid}")] //get entire class list of a user
+pub async fn get_classlist(state: Data<AppState>, path: Path<i32>) -> impl Responder {
+    let userid: i32 = path.into_inner();
+    match sqlx::query_as::<_, WishList>(
+        "SELECT * from class_list, wishlist\
+    WHERE wishlist.userid = $1 and wishlist.classlistid = class_list.classlistid",
+    )
+    .fetch_all(&state.db)
+    .await
+    {
+        Ok(wishlist) => HttpResponse::Ok().json(wishlist),
+        Err(_) => HttpResponse::NotFound().json("Wishlist doesn't exist"),
     }
 }
 
@@ -262,7 +274,10 @@ struct ClassInfo {
 }
 
 #[get("/search_class")]
-pub async fn search_class(state: Data<AppState>, Query(info): Query<HashMap<String, String>>) -> impl Responder {
+pub async fn search_class(
+    state: Data<AppState>,
+    Query(info): Query<HashMap<String, String>>,
+) -> impl Responder {
     println!("{:?}", info);
 
     let iterable_headers: HashMap<String, String> =
@@ -284,13 +299,41 @@ pub async fn search_class(state: Data<AppState>, Query(info): Query<HashMap<Stri
 
     println!("{}", sql_query);
 
-    match sqlx::query_as::<_, ClassInfo>(
-        &sql_query,
-    )
-    .fetch_all(&state.db)
-    .await
+    match sqlx::query_as::<_, ClassInfo>(&sql_query)
+        .fetch_all(&state.db)
+        .await
     {
         Ok(class_search_results) => HttpResponse::Ok().json(class_search_results),
         Err(_) => HttpResponse::NotFound().json("No classes found"),
     }
+}
+
+#[get("/required/{term}/{subject}/{number}")]
+pub async fn get_required(state: Data<AppState>, path: Path<(String, String, String)>) -> Result<impl Responder, Box<dyn Error>>  {
+    let (term, subject, number) = path.into_inner();
+
+    let mut url: String = "https://eadvs-cscc-catalog-api.apps.asu.edu/catalog-microservices/api/v1/search/courses?refine=Y".to_owned();
+    url.push_str("&term=");
+    url.push_str(&*term);
+    url.push_str("&subject=");
+    url.push_str(&*subject);
+    url.push_str("&catalogNbr=");
+    url.push_str(&*number);
+
+
+    let client = reqwest::Client::new();
+    let resp = client
+        .get(url)
+        .header(AUTHORIZATION, "Bearer null")
+        .send()
+        .await?
+        .text()
+        .await?;
+
+    println!("{}", resp);
+    // let re = Regex::new(r#"Prerequisite(s): (.*)","ACADGROUP"#).unwrap();
+    // let capture =  re.captures(&resp).unwrap();
+    // println!("{}", capture.get(1).unwrap().as_str());
+
+    Ok(HttpResponse::Ok())
 }
