@@ -1,0 +1,17 @@
+version: "3.9"
+services: 
+  postgres-server:
+    build: ./db/
+    ports:
+      - "5432:5432"
+    volumes:
+      - /tmp/postgres-data:/var/lib/postgresql/data
+  actix-backend:
+    build: ./server/
+    ports:
+      - "8080:8080"
+    environment:
+      - RUST_CONTAINER=1
+
+
+

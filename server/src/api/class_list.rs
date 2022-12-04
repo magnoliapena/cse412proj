@@ -1,51 +1,203 @@
-use actix_identity::Identity;
-use actix_web::{ web };
-use serde::{ Serialize, Deserialize };
+use crate::AppState;
+use actix_web::{
+    get, post, delete,
+    web::{Data, Json},
+    HttpResponse, Responder,
+};
+use serde::Deserialize;
+use sqlx;
 
-use crate::lib::error::Error;
+use crate::api::common::{AddToWishlist, GetClassListId, ClassInfo};
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Class {
-    subject: String,
-    teacher: String,
-    location: String,
+// async fn get_class_list_id(state: Data<AppState>, userid: String) -> String {
+//     let sql_query =
+//         sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM wishlist WHERE userid = $1;")
+//             .bind(userid.to_string());
+// 
+//     match sql_query.fetch_one(&state.db).await {
+//         Ok(result) => result.classlistid,
+//         Err(_) => "".to_string(),
+//     }
+//     
+// }
+
+#[derive(Deserialize)]
+pub struct UserId {
+    userid: String,
 }
 
-impl Class {
-    pub fn all() -> Vec<Class> {
-        vec![
-            Class {
-                subject: "CSE69".into(),
-                teacher: "Me".into(),
-                location: "your mom".into(),
-            },
-            Class {
-                subject: "CSE420".into(),
-                teacher: "Myself".into(),
-                location: "nowhere".into(),
-            },
-            Class {
-                subject: "CSE69420".into(),
-                teacher: "I".into(),
-                location: "everywhere".into(),
-            },
-        ]
+#[post("/user/add_to_wishlist")] // adds a class to wishlist
+pub async fn add_to_wishlist(state: Data<AppState>, body: Json<AddToWishlist>) -> impl Responder {
+    // queries the user for their wishlist related classlist and gets it's id
+    let sql_query =
+        sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM wishlist WHERE userid = $1;")
+            .bind(body.userid.to_string());
+
+    match sql_query.fetch_one(&state.db).await {
+        Ok(result) => {
+            let class_list_id: GetClassListId = result;
+
+            // inserts the class into the wishlist's classlist
+            match sqlx::query(
+                "INSERT INTO class_list_relationship (ClassListId, ClassId, Term) VALUES ($1, $2, $3);",
+            )
+            .bind(class_list_id.classlistid.to_string())
+            .bind(body.classid)
+            .bind(body.term)
+            .execute(&state.db)
+            .await
+            {
+                Ok(_) => HttpResponse::Ok().json("ok"),
+                Err(e) => {
+                    println!("{}", e);
+                    HttpResponse::InternalServerError().json("Failed to add to wishlist")
+                }
+            }
+        }
+        Err(_) => HttpResponse::InternalServerError().json("Failed to get classlistid"),
     }
 }
 
-pub async fn get_all(user: Option<Identity>) -> Result<web::Json<Vec<Class>>, Error> {
-    println!("[class_list] - get all classes");
 
-    if let Some(user) = user {
-        println!("[class_list] - username: {}", user.id().unwrap());
+#[get("/user/get_wishlist")]
+pub async fn get_wishlist(state: Data<AppState>, body: Json<UserId>) -> impl Responder {
+    let sql_query =
+        sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM wishlist WHERE userid = $1;")
+            .bind(body.userid.to_string());
 
-        Ok(web::Json(Class::all()))
-    } else {
-        println!("[class_list] - username: failed");
+    match sql_query.fetch_one(&state.db).await {
+        Ok(result) => {
+            let class_list_id: GetClassListId = result;
+            println!("classlistid: {}", class_list_id.classlistid);
+            match sqlx::query_as::<_, ClassInfo>("SELECT * FROM class, class_list_relationship WHERE class_list_relationship.ClassListId = $1 AND class.ClassId=class_list_relationship.ClassId AND class.Term=class_list_relationship.Term;").bind(class_list_id.classlistid.to_string()).fetch_all(&state.db).await {
+                Ok(wishlist) => {
+                    HttpResponse::Ok().json(wishlist)
+                },
+                Err(e) => {
+                    println!("{}", e);
+                    HttpResponse::InternalServerError().json("Failed to get wishlist 2")
+                }
+            }
+        }
+        Err(_) => HttpResponse::InternalServerError().json("Failed to add to wishlist")
+    }
+}
 
-        Err(Error {
-            message: "Auth failed".into(),
-            status: 401,
-        })
+#[delete("/user/delete_from_wishlist")]
+pub async fn delete_from_wishlist(state: Data<AppState>, body: Json<AddToWishlist>) -> impl Responder {
+    let sql_query =
+        sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM wishlist WHERE userid = $1;")
+            .bind(body.userid.to_string());
+
+    match sql_query.fetch_one(&state.db).await {
+        Ok(result) => {
+            let class_list_id: GetClassListId = result;
+
+            // deletes the class into the wishlist's classlist
+            match sqlx::query(
+                "DELETE FROM class_list_relationship WHERE classlistid = $1 AND classid = $2 AND term = $3;",
+            )
+            .bind(class_list_id.classlistid.to_string())
+            .bind(body.classid)
+            .bind(body.term)
+            .execute(&state.db)
+            .await
+            {
+                Ok(_) => HttpResponse::Ok().json("ok"),
+                Err(e) => {
+                    println!("{}", e);
+                    HttpResponse::InternalServerError().json("Failed to remove from the list, class or user not found")
+                }
+            }
+        }
+        Err(_) => HttpResponse::InternalServerError().json("Failed to get classlistid"),
+    }
+}
+
+#[post("/user/add_to_takenlist")] // adds a class to taken list
+pub async fn add_to_takenlist(state: Data<AppState>, body: Json<AddToWishlist>) -> impl Responder {
+    // queries the user for their takenlist related classlist and gets it's id
+    let sql_query =
+        sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM takenlist WHERE userid = $1;")
+            .bind(body.userid.to_string());
+
+    match sql_query.fetch_one(&state.db).await {
+        Ok(result) => {
+            let class_list_id: GetClassListId = result;
+
+            // inserts the class into the takenlist's classlist
+            match sqlx::query(
+                "INSERT INTO class_list_relationship (ClassListId, ClassId, Term) VALUES ($1, $2, $3);",
+            )
+            .bind(class_list_id.classlistid.to_string())
+            .bind(body.classid)
+            .bind(body.term)
+            .execute(&state.db)
+            .await
+            {
+                Ok(_) => HttpResponse::Ok().json("ok"),
+                Err(e) => {
+                    println!("{}", e);
+                    HttpResponse::InternalServerError().json("Failed to add to takenlist")
+                }
+            }
+        }
+        Err(_) => HttpResponse::InternalServerError().json("Failed to get classlistid"),
+    }
+}
+
+
+#[get("/user/get_takenlist")]
+pub async fn get_takenlist(state: Data<AppState>, body: Json<UserId>) -> impl Responder {
+    let sql_query =
+        sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM takenlist WHERE userid = $1;")
+            .bind(body.userid.to_string());
+
+    match sql_query.fetch_one(&state.db).await {
+        Ok(result) => {
+            let class_list_id: GetClassListId = result;
+            println!("classlistid: {}", class_list_id.classlistid);
+            match sqlx::query_as::<_, ClassInfo>("SELECT * FROM class, class_list_relationship WHERE class_list_relationship.ClassListId = $1 AND class.ClassId=class_list_relationship.ClassId AND class.Term=class_list_relationship.Term;").bind(class_list_id.classlistid.to_string()).fetch_all(&state.db).await {
+                Ok(takenlist) => {
+                    HttpResponse::Ok().json(takenlist)
+                },
+                Err(e) => {
+                    println!("{}", e);
+                    HttpResponse::InternalServerError().json("Failed to get takenlist 2")
+                }
+            }
+        }
+        Err(_) => HttpResponse::InternalServerError().json("Failed to add to takenlist")
+    }
+}
+
+#[delete("/user/delete_from_takenlist")]
+pub async fn delete_from_takenlist(state: Data<AppState>, body: Json<AddToWishlist>) -> impl Responder {
+    let sql_query =
+        sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM takenlist WHERE userid = $1;")
+            .bind(body.userid.to_string());
+
+    match sql_query.fetch_one(&state.db).await {
+        Ok(result) => {
+            let class_list_id: GetClassListId = result;
+
+            // deletes the class into the takesn's classlist
+            match sqlx::query(
+                "DELETE FROM class_list_relationship WHERE classlistid = $1 AND classid = $2 AND term = $3;",
+            )
+            .bind(class_list_id.classlistid.to_string())
+            .bind(body.classid)
+            .bind(body.term)
+            .execute(&state.db)
+            .await
+            {
+                Ok(_) => HttpResponse::Ok().json("ok"),
+                Err(e) => {
+                    println!("{}", e);
+                    HttpResponse::InternalServerError().json("Failed to remove from the taken list, class or user not found")
+                }
+            }
+        }
+        Err(_) => HttpResponse::InternalServerError().json("Failed to get classlistid"),
     }
 }
