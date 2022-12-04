@@ -11,15 +11,6 @@ use sqlx::{self, FromRow};
 use uuid::Uuid;
 
 //schemas
-#[derive(Serialize, FromRow)] //user table
-struct User {
-    userid: String, //pk
-    password: String,
-    location: String,
-    username: String,
-    major: String,
-}
-
 #[derive(Serialize, FromRow)] //class table (contains all classes at ASU)
 struct Class {
     classid: i32, //pk
@@ -66,15 +57,6 @@ struct Requirements {
 }
 
 #[derive(Deserialize)]
-pub struct CreateUser {
-    pub password: String,
-    pub username: String,
-    pub email: String,
-    pub location: String,
-    pub major: String,
-}
-
-#[derive(Deserialize)]
 pub struct CreateWishList {
     pub userid: i32,
     pub classlistid: i32,
@@ -97,7 +79,7 @@ pub async fn get_user(state: Data<AppState>, path: Path<i32>) -> impl Responder 
 }
 
 #[get("/user/{userid}/wishlist")] //get entire class list of a user
-pub async fn get_classlist(state: Data<AppState>, path: Path<i32>) -> impl Responder {
+pub async fn get_wishlist(state: Data<AppState>, path: Path<i32>) -> impl Responder {
     let userid: i32 = path.into_inner();
     match sqlx::query_as::<_, WishList>(
         "SELECT * from class_list, wishlist\
@@ -161,6 +143,24 @@ pub async fn get_requirements(state: Data<AppState>, path: Path<i32>) -> impl Re
         Ok(prerequisites) => HttpResponse::Ok().json(prerequisites),
         Err(_) => HttpResponse::NotFound().json("Requirements or class doesn't exist"),
     }
+}
+
+#[derive(Deserialize)]
+pub struct CreateUser {
+    pub password: String,
+    pub username: String,
+    pub email: String,
+    pub location: String,
+    pub major: String,
+}
+
+#[derive(Serialize, FromRow)] //user table
+struct User {
+    userid: String, //pk
+    password: String,
+    location: String,
+    username: String,
+    major: String,
 }
 
 //post functions
