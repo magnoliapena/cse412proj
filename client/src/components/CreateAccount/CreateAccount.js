@@ -1,5 +1,7 @@
 import './CreateAccount.css'
 import { useState } from 'react'
+import useUser from '../../useUser'
+import { useNavigate } from "react-router-dom"
 
 const CreateAccount = () => {
   const [username, setUsername] = useState('')
@@ -7,6 +9,8 @@ const CreateAccount = () => {
   const [email, setEmail] = useState('')
   const [major, setMajor] = useState('')
   const [location, setLocation] = useState('')
+  const { setUser } = useUser()
+  const navigate = useNavigate()
 
   const handleSubmit = () => {
     const data = {
@@ -25,7 +29,11 @@ const CreateAccount = () => {
 
     fetch('http://localhost:8080/api/create_account', request)
       .then(response => response.json())
-      .then(data => console.log(data))
+      .then(data => {
+        const { username, userid } = data
+        setUser({ username, userId: userid })
+        navigate('/profile/info')
+      })
 
   }
 

@@ -1,31 +1,50 @@
 import './Wishlist.css'
 import { useMemo } from 'react'
 import { useTable } from 'react-table'
+import { useState, useEffect } from 'react'
+import useUser from '../../../useUser'
 
 const Wishlist = () => {
-  const data = useMemo(
-    () => [
-      {
-        course: 'AAA101',
-        title: 'Lost Civilizations',
-        number: '222222',
-        seats: '0 out of 24'
-      },
-      {
-        course: 'AAA101',
-        title: 'Lost Civilizations',
-        number: '222222',
-        seats: '0 out of 24'
-      },
-      {
-        course: 'AAA101',
-        title: 'Lost Civilizations',
-        number: '222222',
-        seats: '0 out of 24'
-      }
-    ],
-    []
-  )
+  const { user } = useUser()
+  const [data, setData] = useState(null)
+
+  useEffect(() => {
+    const request = {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userid: user.userId })
+    }
+  
+    fetch(`http://localhost:8080/api/user/${user.userId}/wishlist`, request)
+      .then(response => response.json())
+      .then(data => {
+        setData(data)
+      })
+  }, [])
+
+  // const data = useMemo(
+  //   () => [
+  //     {
+  //       course: 'AAA101',
+  //       title: 'Lost Civilizations',
+  //       number: '222222',
+  //       seats: '0 out of 24'
+  //     },
+  //     {
+  //       course: 'AAA101',
+  //       title: 'Lost Civilizations',
+  //       number: '222222',
+  //       seats: '0 out of 24'
+  //     },
+  //     {
+  //       course: 'AAA101',
+  //       title: 'Lost Civilizations',
+  //       number: '222222',
+  //       seats: '0 out of 24'
+  //     }
+  //   ],
+  //   []
+  // )
 
   const columns = useMemo(
     () => [
