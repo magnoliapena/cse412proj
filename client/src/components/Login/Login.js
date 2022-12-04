@@ -3,24 +3,32 @@ import { Link } from 'react-router-dom'
 import { useState } from 'react'
 
 const Login = () => {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
 
   const handleSubmit = () => {
     const data = {
-      email,
+      username,
       password
     }
 
-    console.log(data);
+    const request = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }
+
+    fetch('http://localhost:8080/api/login', request)
+      .then(response => response.json())
+      .then(data => console.log(data))
   }
 
   return (
     <div className="Login">
       <h1>Log In</h1>
       <div className="Column">
-        <label>Email</label>
-        <input className="TextInput" onChange={event => setEmail(event.target.value)} />
+        <label>Username</label>
+        <input className="TextInput" onChange={event => setUsername(event.target.value)} />
       </div>
       <div className="Column">
         <label>Password</label>
