@@ -80,7 +80,6 @@ async fn main() -> std::io::Result<()> {
             .service(web::scope("/api").service(search_class))
     })
     .bind(("0.0.0.0", 8080))?
-    .bind("[::1]:8080")?
     .run()
     .await
 }
