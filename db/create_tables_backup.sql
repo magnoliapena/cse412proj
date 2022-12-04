@@ -24,33 +24,25 @@ CREATE TABLE class (
     primary key(ClassId, Term)
 );
 
-
 CREATE TABLE class_list (
   ClassListId text PRIMARY KEY,
+  classes text[],
   term integer
-);
-
-CREATE TABLE class_list_relationship (
-  ClassListId text,
-  Foreign key (ClassListId) references class_list(ClassListId),
-  ClassId integer, 
-  Term integer,
-  Foreign key (ClassId, Term) references class(ClassId, Term)
 );
 
 CREATE TABLE wishlist (
   UserId text,
-  Foreign key (UserId) references asu_user(UserId),
   ClassListId text,
-  Foreign key (ClassListId) references class_list(ClassListId)
+  PriorityRanking integer,
+  AddedDate date
 );
  
 
-CREATE TABLE takenlist (
-  UserId text,
-  Foreign key (UserId) references asu_user(UserId),
-  ClassListId text,
-  Foreign key (ClassListId) references class_list(ClassListId)
+CREATE TABLE taken (
+  UserId text references asu_user,
+  taken_ClassId integer, 
+  taken_Term integer,
+  Foreign key (taken_ClassId, taken_Term) references class
 );
 
 
