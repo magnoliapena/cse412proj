@@ -17,6 +17,16 @@ const CreateAccount = () => {
       location
     }
 
+    const request = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }
+
+    fetch('/api/create_account', request)
+      .then(response => response.json())
+      .then(data => console.log(data))
+
     console.log(data);
   }
 
