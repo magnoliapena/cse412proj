@@ -7,7 +7,7 @@ const Profile = () => {
 
   return (
     <div className='Profile'>
-      <h2>@</h2>
+      <h2>@{user.username}</h2>
       <div className='Row'>
         <h3><Link className='Profile-Link' to={`/profile/info`}>Information</Link></h3>
         <h3><Link className='Profile-Link' to={`/profile/wishlist`}>Wishlist</Link></h3>
