@@ -7,19 +7,20 @@ CREATE TABLE asu_user (
 );
 
 CREATE TABLE class (
-    Units integer,
-    Dates text,
-    Status integer,
-    StartTime text,
-    EndTime text,
-    Days text,
-    Location text,
-    Instructor text[],
-    Course text,
-    ClassId integer primary key,
-    Session text,
-    Term integer,
-    Title text
+  ClassId integer,
+  Title text,
+  Units integer,
+  Dates text,
+  Status integer,
+  Days text,
+  StartTime text,
+  EndTime text,
+  Instructor text[],
+  Location text,
+  Course text,
+  Session text,
+  Term integer,
+  primary key(ClassId, Term)
 );
 
 CREATE TABLE wishlist (
@@ -36,13 +37,15 @@ CREATE TABLE class_list (
 
 CREATE TABLE taken (
   UserId text references asu_user,
-  ClassId int references class
+  taken_ClassId integer, 
+  taken_Term integer,
+  Foreign key (taken_ClassId, taken_Term) references class
 );
 
 
 CREATE TABLE requirements (
-    ClassId integer references class,
-    Prerequisites text[]
+  Prerequisites text[],
+  req_ClassId integer, 
+  req_Term integer,
+  Foreign key (req_ClassId, req_Term) references class
 );
-
-INSERT INTO class (Units, Dates, Status, StartTime, EndTime, Days, Location, Instructor, Course, ClassId, Session, Term, Title) VALUES (3, '', 3, '', '', '', '', NULL, '', 42, '', 2214, '');
