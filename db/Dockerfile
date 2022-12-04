@@ -4,7 +4,7 @@ WORKDIR .
 
 ENV POSTGRES_USER postgres
 ENV POSTGRES_PASSWORD postgres
-ENV POSTGRES_DB docker
+ENV POSTGRES_DB postgres
 
 COPY ./create_tables.sql /docker-entrypoint-initdb.d/
 
