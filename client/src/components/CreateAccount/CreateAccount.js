@@ -23,7 +23,7 @@ const CreateAccount = () => {
       body: JSON.stringify(data)
     }
 
-    fetch('/api/create_account', request)
+    fetch('http://localhost:8080/api/create_account', request)
       .then(response => response.json())
       .then(data => console.log(data))
 
