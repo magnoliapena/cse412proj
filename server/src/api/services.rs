@@ -188,13 +188,27 @@ pub async fn create_account(
     }
 }
 
+#[derive(Serialize)] //user table
+struct LoginInfo {
+    userid: String, //pk
+    password: String,
+}
+
+#[derive(Deserialize, FromRow)]
+struct LoginResponse {
+    username: String,
+    userid: String,
+    location: String,
+    major: String,
+}
+
 #[get("/login")] //post user
 pub async fn login(
     state: Data<AppState>,
-    body: Json<CreateUser>,
+    body: Json<LoginInfo>,
 ) -> impl Responder {
-    match sqlx::query_as::<_, User>(
-        "SELECT userid, location, major FROM asu_user WHERE username = $1 AND password = $2"
+    match sqlx::query_as::<_, LoginResponse>(
+        "SELECT username, userid, location, major FROM asu_user WHERE username = $1 AND password = $2"
     )
         .bind(body.username.to_string())
         .bind(body.password.to_string())
@@ -228,14 +242,6 @@ pub async fn post_wishlist(
         Ok(wishlist) => HttpResponse::Ok().json(wishlist),
         Err(_) => HttpResponse::InternalServerError().json("Failed to create wishlist"),
     }
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-struct ClassInfoRequest {
-    // info for class search
-    class_name: Option<String>,
-    class_cat: Option<String>,
-    class_instructor: Option<String>,
 }
 
 #[derive(Serialize, FromRow)]
