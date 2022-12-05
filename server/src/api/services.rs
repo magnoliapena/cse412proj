@@ -208,6 +208,14 @@ pub async fn search_class(
 
     //concat sql conditionals
     for value in &iterable_headers {
+        if value.0 == "instructor" {
+            sql_where.push_str("e'\\'");
+            sql_where.push_str(value.1);
+            sql_where.push_str("\\'' = ANY(instructor)");
+            sql_where.push_str(" AND ");
+            continue;
+        }
+
         sql_where.push_str(value.0);
         sql_where.push_str(" = '");
         sql_where.push_str(value.1);
@@ -224,13 +232,15 @@ pub async fn search_class(
         .await
     {
         Ok(class_search_results) => HttpResponse::Ok().json(class_search_results),
-        Err(_) => HttpResponse::NotFound().json("No classes found"),
+        Err(e) => {
+            println!("{:?}", e);
+            HttpResponse::NotFound().json("No classes found")
+        },
     }
 }
 
 #[get("/required/{term}/{subject}/{number}")]
 pub async fn get_required(
-    state: Data<AppState>,
     path: Path<(String, String, String)>,
 ) -> Result<impl Responder, Box<dyn Error>> {
     let (term, subject, number) = path.into_inner(); //grab search queries
