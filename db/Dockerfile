@@ -8,7 +8,7 @@ ENV POSTGRES_DB postgres
 
 COPY ./create_tables.sql /docker-entrypoint-initdb.d/
 
-COPY ./classes.csv /var/lib/tabledata/
+COPY ./classes.csv /var/lib/tabledata/classes.csv
 
 COPY ./populate_data.sh /docker-entrypoint-initdb.d/populate_data.sh
 

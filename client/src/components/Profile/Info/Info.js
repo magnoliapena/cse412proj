@@ -30,7 +30,7 @@ const Info = () => {
   return data ? (
     <div>
       <p>Location: {data?.location}</p>
-      <p>Major: { data?.major}</p>
+      <p>Major: {data?.major}</p>
     </div>
   ) : (
     <div>Loading...</div>

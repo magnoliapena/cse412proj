@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 //usage
 use crate::AppState;
+use crate::api::class_list::create_classlist_for_user;
 use actix_web::{
     get, post,
     web::{Data, Json, Path, Query},
@@ -12,6 +13,7 @@ use reqwest::header::AUTHORIZATION;
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow};
 use uuid::Uuid;
+
 
 //schemas
 #[derive(Serialize, FromRow)] //class table (contains all classes at ASU)
@@ -67,85 +69,17 @@ pub struct CreateWishList {
     pub added_date: String,
 }
 
-
 //USER GET REQUESTS
 #[get("/user/{userid}")] //get single user from id
-pub async fn get_user(state: Data<AppState>, path: Path<i32>) -> impl Responder {
-    let id: i32 = path.into_inner();
+pub async fn get_user(state: Data<AppState>, path: Path<String>) -> impl Responder {
+    let id: String = path.into_inner();
     match sqlx::query_as::<_, User>("SELECT * FROM asu_user WHERE userid = $1")
         .bind(id)
-        .fetch_all(&state.db)
+        .fetch_one(&state.db)
         .await
     {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(_) => HttpResponse::NotFound().json("User doesn't exist"),
-    }
-}
-
-#[get("/user/{userid}/wishlist")] //get entire class list of a user
-pub async fn get_wishlist(state: Data<AppState>, path: Path<i32>) -> impl Responder {
-    let userid: i32 = path.into_inner();
-    match sqlx::query_as::<_, WishList>(
-        "SELECT * from class_list, wishlist\
-    WHERE wishlist.userid = $1 and wishlist.classlistid = class_list.classlistid",
-    )
-    .fetch_all(&state.db)
-    .await
-    {
-        Ok(wishlist) => HttpResponse::Ok().json(wishlist),
-        Err(_) => HttpResponse::NotFound().json("Wishlist doesn't exist"),
-    }
-}
-
-//CLASS GET REQUESTS
-#[get("/class/{classid}")] //get single class from class id
-pub async fn get_class(state: Data<AppState>, path: Path<i32>) -> impl Responder {
-    let classid: i32 = path.into_inner();
-    match sqlx::query_as::<_, Class>("SELECT classid from class_list where classid = $1")
-        .bind(classid)
-        .fetch_all(&state.db)
-        .await
-    {
-        Ok(class) => HttpResponse::Ok().json(class),
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
-    }
-}
-//might need to add more depending if we use filters (if i need to make a request for specific filter)
-//idk if we're implementing that
-#[get("/classes")] //get all classes //general template
-pub async fn get_all_classes(state: Data<AppState>) -> impl Responder {
-    match sqlx::query_as::<_, Class>("SELECT * FROM class")
-        .fetch_all(&state.db)
-        .await
-    {
-        Ok(classes) => HttpResponse::Ok().json(classes),
-        Err(_) => HttpResponse::NotFound().json("No classes inputted into data"),
-    }
-}
-#[get("/classes/{term}")] // list all classes for a term
-pub async fn get_classes_filterby_term(state: Data<AppState>) -> impl Responder {
-    match sqlx::query_as::<_, Class>("SELECT * FROM class WHERE term = $1")
-        .fetch_all(&state.db)
-        .await
-    {
-        Ok(classes) => HttpResponse::Ok().json(classes),
-        Err(_) => HttpResponse::NotFound().json("No classes inputted into data"),
-    }
-}
-
-#[get("/class/{classid}/prerequisites")]
-//get the requirements of a single class based off classid
-pub async fn get_requirements(state: Data<AppState>, path: Path<i32>) -> impl Responder {
-    let classid: i32 = path.into_inner();
-    match sqlx::query_as::<_, Requirements>(
-        "SELECT prerequisites from requirements WHERE classid = $1",
-    )
-    .bind(classid)
-    .fetch_all(&state.db)
-    .await
-    {
-        Ok(prerequisites) => HttpResponse::Ok().json(prerequisites),
-        Err(_) => HttpResponse::NotFound().json("Requirements or class doesn't exist"),
     }
 }
 
@@ -170,10 +104,14 @@ struct User {
 //post functions
 #[post("/create_account")] //post user
 pub async fn create_account(state: Data<AppState>, body: Json<CreateUser>) -> impl Responder {
+    println!(
+        "attempting account creation as: {} | {} | {} | {} | {}",
+        body.username, body.password, body.email, body.location, body.major
+    );
     let id = Uuid::new_v4();
     match sqlx::query_as::<_, User>(
         "INSERT INTO asu_user (userid, password, username, email, location, major)\
-            VALUES ($1, $2, $3, $4, $5) RETURNING userid, password, username, email, location, major",
+            VALUES ($1, $2, $3, $4, $5, $6) RETURNING userid, password, username, email, location, major",
     )
     .bind(id.to_string())
     .bind(body.password.to_string())
@@ -184,7 +122,11 @@ pub async fn create_account(state: Data<AppState>, body: Json<CreateUser>) -> im
     .fetch_one(&state.db)
     .await
     {
-        Ok(user) => HttpResponse::Ok().json(user),
+        Ok(user) => {
+
+            create_classlist_for_user(state.clone(), id.to_string()).await;
+            HttpResponse::Ok().json(user)
+        }
         Err(_) => HttpResponse::InternalServerError().json("Failed to create user"),
     }
 }
@@ -203,8 +145,9 @@ struct LoginResponse {
     major: String,
 }
 
-#[get("/login")] //post user
+#[post("/login")] //post user
 pub async fn login(state: Data<AppState>, body: Json<LoginInfo>) -> impl Responder {
+    println!("attempting login as: {} | {}", body.username, body.password);
     match sqlx::query_as::<_, LoginResponse>(
         "SELECT username, userid, location, major FROM asu_user WHERE username = $1 AND password = $2"
     )
@@ -214,7 +157,7 @@ pub async fn login(state: Data<AppState>, body: Json<LoginInfo>) -> impl Respond
         .await
     {
         Ok(user) => HttpResponse::Ok().json(user),
-        Err(_) => HttpResponse::InternalServerError().json("Failed to create user"),
+        Err(_) => HttpResponse::InternalServerError().json("Failed to login user"),
     }
 }
 
@@ -230,29 +173,6 @@ pub struct AddToWishlist {
     term: i32,
 }
 
-#[post("/user/{userid}/wishlist")] //post wishlist
-pub async fn post_wishlist(
-    state: Data<AppState>,
-    path: Path<i32>,
-    body: Json<CreateWishList>,
-) -> impl Responder {
-    let id = path.into_inner();
-    match sqlx::query_as::<_, WishList>(
-        "INSERT INTO wishlist (userid, classlistid, priority_ranking, added_date)\
-         VALUES($1, $2, $3, $4) RETURNING userid, classlistid, priority_ranking, added_date",
-    )
-    .bind(body.userid.to_string())
-    .bind(body.classlistid.to_string())
-    .bind(body.priority_ranking.to_string())
-    .bind(body.added_date.to_string())
-    .bind(id)
-    .fetch_one(&state.db)
-    .await
-    {
-        Ok(wishlist) => HttpResponse::Ok().json(wishlist),
-        Err(_) => HttpResponse::InternalServerError().json("Failed to create wishlist"),
-    }
-}
 
 #[derive(Serialize, FromRow, Debug)]
 struct ClassInfo {
@@ -288,6 +208,14 @@ pub async fn search_class(
 
     //concat sql conditionals
     for value in &iterable_headers {
+        if value.0 == "instructor" {
+            sql_where.push_str("e'\\'");
+            sql_where.push_str(value.1);
+            sql_where.push_str("\\'' = ANY(instructor)");
+            sql_where.push_str(" AND ");
+            continue;
+        }
+
         sql_where.push_str(value.0);
         sql_where.push_str(" = '");
         sql_where.push_str(value.1);
@@ -304,13 +232,15 @@ pub async fn search_class(
         .await
     {
         Ok(class_search_results) => HttpResponse::Ok().json(class_search_results),
-        Err(_) => HttpResponse::NotFound().json("No classes found"),
+        Err(e) => {
+            println!("{:?}", e);
+            HttpResponse::NotFound().json("No classes found")
+        },
     }
 }
 
 #[get("/required/{term}/{subject}/{number}")]
 pub async fn get_required(
-    state: Data<AppState>,
     path: Path<(String, String, String)>,
 ) -> Result<impl Responder, Box<dyn Error>> {
     let (term, subject, number) = path.into_inner(); //grab search queries
