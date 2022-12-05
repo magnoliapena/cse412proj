@@ -29,8 +29,8 @@ const Info = () => {
   
   return data ? (
     <div>
-      <p>Location: {data[0]?.location}</p>
-      <p>Major: { data[0]?.major}</p>
+      <p>Location: {data?.location}</p>
+      <p>Major: { data?.major}</p>
     </div>
   ) : (
     <div>Loading...</div>

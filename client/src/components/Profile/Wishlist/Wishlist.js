@@ -6,119 +6,67 @@ import useUser from '../../../useUser'
 
 const Wishlist = () => {
   const { user } = useUser()
-  const [data, setData] = useState(null)
+  const [results, setResults] = useState(null)
 
   useEffect(() => {
     const request = {
-      method: 'GET',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userid: user.userId })
+      body: JSON.stringify({ userid: user.userid })
     }
   
-    fetch(`http://localhost:8080/api/user/${user.userId}/wishlist`, request)
+    fetch(`http://98.161.210.47:8080/api/user/get_wishlist`, request)
       .then(response => response.json())
       .then(data => {
-        setData(data)
+        setResults(data)
       })
   }, [])
 
-  // const data = useMemo(
-  //   () => [
-  //     {
-  //       course: 'AAA101',
-  //       title: 'Lost Civilizations',
-  //       number: '222222',
-  //       seats: '0 out of 24'
-  //     },
-  //     {
-  //       course: 'AAA101',
-  //       title: 'Lost Civilizations',
-  //       number: '222222',
-  //       seats: '0 out of 24'
-  //     },
-  //     {
-  //       course: 'AAA101',
-  //       title: 'Lost Civilizations',
-  //       number: '222222',
-  //       seats: '0 out of 24'
-  //     }
-  //   ],
-  //   []
-  // )
+  const handleRemove = (classid, term) => {
+    const requestData = {
+      userid: user.userid,
+      classid,
+      term
+    }
 
-  const columns = useMemo(
-    () => [
-      {
-        Header: 'Course',
-        accessor: 'course', // accessor is the "key" in the data
-      },
-      {
-        Header: 'Title',
-        accessor: 'title',
-      },
-      {
-        Header: 'Number',
-        accessor: 'number',
-      },
-      {
-        Header: 'Open Seats',
-        accessor: 'seats',
-      }
-    ],
-    []
-  )
+    const request = {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestData)
+    }
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = useTable({ columns, data })
+    fetch('http://98.161.210.47:8080/api/user/delete_from_wishlist', request)
+      .then(response => response.json())
+      .then(resData => {
+        const request = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userid: user.userid })
+        }
+      
+        fetch(`http://98.161.210.47:8080/api/user/get_wishlist`, request)
+          .then(response => response.json())
+          .then(data => {
+            setResults(data)
+          })
+      })
+  }
 
   return (
-    <table {...getTableProps()} style={{"overflow": "hidden"}}>
-      <thead>
-        {headerGroups.map(headerGroup => (
-          <tr {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map(column => (
-              <th
-                {...column.getHeaderProps()}
-                style={{
-                  borderBottom: 'solid 0px white',
-                  paddingBottom: '20px'
-                }}
-              >
-                {column.render('Header')}
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody {...getTableBodyProps()}>
-        {rows.map(row => {
-          prepareRow(row)
-          return (
-            <tr {...row.getRowProps()}>
-              {row.cells.map(cell => {
-                return (
-                  <td
-                    {...cell.getCellProps()}
-                    style={{
-                      padding: '20px',
-                      borderBottom: '0px solid white'
-                    }}
-                  >
-                    {cell.render('Cell')}
-                    <div style={{"width": "200%", "height": "1px", "backgroundColor": "white", "marginTop": "40px"}} />
-                  </td>
-                )
-              })}
-            </tr>
-          )
-        })}
-      </tbody>
-    </table>
+    <div>
+      {results && results.map((result, index) => {
+        return (
+          <div key={index} className='Row Search-Result Wishlist-Row'>
+            <button className='Button' onClick={() => handleRemove(result.classid, result.term)}>Remove</button>
+            <p>{result.course}</p>
+            <p>{result.days}</p>
+            <p>{result.starttime} - {result.endtime}</p>
+            <p>{result.instructor}</p>
+            <p>{result.location}</p>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 

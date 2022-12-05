@@ -21,3 +21,7 @@
 .Search .Row {
   margin: 10px 0px;
 }
+
+.Search-Result {
+  font-size: 18px;
+}
