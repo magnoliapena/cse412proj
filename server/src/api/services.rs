@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 //usage
 use crate::AppState;
+use crate::api::class_list::create_classlist_for_user;
 use actix_web::{
     get, post,
     web::{Data, Json, Path, Query},
@@ -12,6 +13,7 @@ use reqwest::header::AUTHORIZATION;
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow};
 use uuid::Uuid;
+
 
 //schemas
 #[derive(Serialize, FromRow)] //class table (contains all classes at ASU)
@@ -120,7 +122,11 @@ pub async fn create_account(state: Data<AppState>, body: Json<CreateUser>) -> im
     .fetch_one(&state.db)
     .await
     {
-        Ok(user) => HttpResponse::Ok().json(user),
+        Ok(user) => {
+
+            create_classlist_for_user(state.clone(), id.to_string()).await;
+            HttpResponse::Ok().json(user)
+        }
         Err(_) => HttpResponse::InternalServerError().json("Failed to create user"),
     }
 }
@@ -167,29 +173,6 @@ pub struct AddToWishlist {
     term: i32,
 }
 
-#[post("/user/{userid}/wishlist")] //post wishlist
-pub async fn post_wishlist(
-    state: Data<AppState>,
-    path: Path<i32>,
-    body: Json<CreateWishList>,
-) -> impl Responder {
-    let id = path.into_inner();
-    match sqlx::query_as::<_, WishList>(
-        "INSERT INTO wishlist (userid, classlistid, priority_ranking, added_date)\
-         VALUES($1, $2, $3, $4) RETURNING userid, classlistid, priority_ranking, added_date",
-    )
-    .bind(body.userid.to_string())
-    .bind(body.classlistid.to_string())
-    .bind(body.priority_ranking.to_string())
-    .bind(body.added_date.to_string())
-    .bind(id)
-    .fetch_one(&state.db)
-    .await
-    {
-        Ok(wishlist) => HttpResponse::Ok().json(wishlist),
-        Err(_) => HttpResponse::InternalServerError().json("Failed to create wishlist"),
-    }
-}
 
 #[derive(Serialize, FromRow, Debug)]
 struct ClassInfo {
