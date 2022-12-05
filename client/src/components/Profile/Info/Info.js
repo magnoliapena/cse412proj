@@ -1,39 +1,39 @@
 import './Info.css'
 import useUser from '../../../useUser'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const Info = () => {
   const { user } = useUser()
   const [data, setData] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    const request = {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userid: user.userid })
+    if(!user) navigate('/login')
+    else {
+      // const request = {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: { user_id: user.userid }
+      // }
+    
+      fetch(`http://98.161.210.47:8080/api/user/${user.userid}`)
+        .then(response => response.json())
+        .then(data => {
+          setData(data)
+        })
     }
-  
-    fetch(`http://localhost:8080/api/user/${user.userid}`, request)
-      .then(response => response.json())
-      .then(data => {
-        setData(data)
-      })
   }, [])
 
-  console.log(user)
   console.log(data)
   
-  return (
+  return data ? (
     <div>
-      <div className='Row'>
-        <p>Location:</p>
-        <p>{data?.location}</p>
-      </div>
-      <div className='Row'>
-        <p>Major:</p>
-        <p>{data?.major}</p>
-      </div>
+      <p>Location: {data[0]?.location}</p>
+      <p>Major: { data[0]?.major}</p>
     </div>
+  ) : (
+    <div>Loading...</div>
   )
 }
 

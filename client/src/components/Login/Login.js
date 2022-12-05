@@ -1,13 +1,13 @@
 import './Login.css'
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import useUser from '../../useUser'
 import { useNavigate } from "react-router-dom"
 
 const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const { setUser } = useUser()
+  const { user, setUser } = useUser()
   const navigate = useNavigate()
 
   const handleSubmit = () => {
@@ -26,11 +26,15 @@ const Login = () => {
       .then(response => response.json())
       .then(resData => {
         // const { username, userid } = data
-        console.log(resData)
-        setUser(data)
+        // console.log(resData)
+        setUser(resData)
         // navigate('/profile/info')
       })
   }
+
+  useEffect(() => {
+    if(user) navigate('/profile/info')
+  }, [user])
 
   return (
     <div className="Login">

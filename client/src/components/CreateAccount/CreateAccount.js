@@ -1,5 +1,5 @@
 import './CreateAccount.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useUser from '../../useUser'
 import { useNavigate } from "react-router-dom"
 
@@ -9,7 +9,7 @@ const CreateAccount = () => {
   const [email, setEmail] = useState('')
   const [major, setMajor] = useState('')
   const [location, setLocation] = useState('')
-  const { setUser } = useUser()
+  const { user, setUser } = useUser()
   const navigate = useNavigate()
 
   const handleSubmit = () => {
@@ -36,6 +36,10 @@ const CreateAccount = () => {
         // navigate('/profile/info')
       })
   }
+
+  useEffect(() => {
+    if(user) navigate('/profile/info')
+  }, [user])
 
   return (
     <div className='CreateAccount'>
