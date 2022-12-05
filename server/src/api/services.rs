@@ -67,7 +67,6 @@ pub struct CreateWishList {
     pub added_date: String,
 }
 
-
 //USER GET REQUESTS
 #[get("/user/{userid}")] //get single user from id
 pub async fn get_user(state: Data<AppState>, path: Path<String>) -> impl Responder {
@@ -79,73 +78,6 @@ pub async fn get_user(state: Data<AppState>, path: Path<String>) -> impl Respond
     {
         Ok(user) => HttpResponse::Ok().json(user),
         Err(_) => HttpResponse::NotFound().json("User doesn't exist"),
-    }
-}
-
-#[get("/user/{userid}/wishlist")] //get entire class list of a user
-pub async fn get_wishlist(state: Data<AppState>, path: Path<i32>) -> impl Responder {
-    let userid: i32 = path.into_inner();
-    match sqlx::query_as::<_, WishList>(
-        "SELECT * from class_list, wishlist\
-    WHERE wishlist.userid = $1 and wishlist.classlistid = class_list.classlistid",
-    )
-    .fetch_all(&state.db)
-    .await
-    {
-        Ok(wishlist) => HttpResponse::Ok().json(wishlist),
-        Err(_) => HttpResponse::NotFound().json("Wishlist doesn't exist"),
-    }
-}
-
-//CLASS GET REQUESTS
-#[get("/class/{classid}")] //get single class from class id
-pub async fn get_class(state: Data<AppState>, path: Path<i32>) -> impl Responder {
-    let classid: i32 = path.into_inner();
-    match sqlx::query_as::<_, Class>("SELECT classid from class_list where classid = $1")
-        .bind(classid)
-        .fetch_all(&state.db)
-        .await
-    {
-        Ok(class) => HttpResponse::Ok().json(class),
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
-    }
-}
-//might need to add more depending if we use filters (if i need to make a request for specific filter)
-//idk if we're implementing that
-#[get("/classes")] //get all classes //general template
-pub async fn get_all_classes(state: Data<AppState>) -> impl Responder {
-    match sqlx::query_as::<_, Class>("SELECT * FROM class")
-        .fetch_all(&state.db)
-        .await
-    {
-        Ok(classes) => HttpResponse::Ok().json(classes),
-        Err(_) => HttpResponse::NotFound().json("No classes inputted into data"),
-    }
-}
-#[get("/classes/{term}")] // list all classes for a term
-pub async fn get_classes_filterby_term(state: Data<AppState>) -> impl Responder {
-    match sqlx::query_as::<_, Class>("SELECT * FROM class WHERE term = $1")
-        .fetch_all(&state.db)
-        .await
-    {
-        Ok(classes) => HttpResponse::Ok().json(classes),
-        Err(_) => HttpResponse::NotFound().json("No classes inputted into data"),
-    }
-}
-
-#[get("/class/{classid}/prerequisites")]
-//get the requirements of a single class based off classid
-pub async fn get_requirements(state: Data<AppState>, path: Path<i32>) -> impl Responder {
-    let classid: i32 = path.into_inner();
-    match sqlx::query_as::<_, Requirements>(
-        "SELECT prerequisites from requirements WHERE classid = $1",
-    )
-    .bind(classid)
-    .fetch_all(&state.db)
-    .await
-    {
-        Ok(prerequisites) => HttpResponse::Ok().json(prerequisites),
-        Err(_) => HttpResponse::NotFound().json("Requirements or class doesn't exist"),
     }
 }
 
@@ -170,7 +102,10 @@ struct User {
 //post functions
 #[post("/create_account")] //post user
 pub async fn create_account(state: Data<AppState>, body: Json<CreateUser>) -> impl Responder {
-    println!("attempting account creation as: {} | {} | {} | {} | {}", body.username, body.password, body.email, body.location, body.major);
+    println!(
+        "attempting account creation as: {} | {} | {} | {} | {}",
+        body.username, body.password, body.email, body.location, body.major
+    );
     let id = Uuid::new_v4();
     match sqlx::query_as::<_, User>(
         "INSERT INTO asu_user (userid, password, username, email, location, major)\

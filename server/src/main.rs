@@ -13,8 +13,10 @@ use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 mod api;
-use api::class_list::{get_wishlist, add_to_wishlist, delete_from_wishlist, get_takenlist, add_to_takenlist};
-use api::services::{create_account, get_required, login, search_class, get_user};
+use api::class_list::{
+    add_to_takenlist, add_to_wishlist, delete_from_wishlist, get_takenlist, get_wishlist,
+};
+use api::services::{create_account, get_required, get_user, login, search_class};
 
 pub struct AppState {
     db: Pool<Postgres>,
