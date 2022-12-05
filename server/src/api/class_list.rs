@@ -59,7 +59,7 @@ pub async fn add_to_wishlist(state: Data<AppState>, body: Json<AddToWishlist>) -
     }
 }
 
-#[get("/user/get_wishlist")]
+#[post("/user/get_wishlist")]
 pub async fn get_wishlist(state: Data<AppState>, body: Json<UserId>) -> impl Responder {
     let sql_query =
         sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM wishlist WHERE userid = $1;")
@@ -156,7 +156,7 @@ pub async fn add_to_takenlist(state: Data<AppState>, body: Json<AddToWishlist>) 
     }
 }
 
-#[get("/user/get_takenlist")]
+#[post("/user/get_takenlist")]
 pub async fn get_takenlist(state: Data<AppState>, body: Json<UserId>) -> impl Responder {
     let sql_query =
         sqlx::query_as::<_, GetClassListId>("SELECT ClassListId FROM takenlist WHERE userid = $1;")
