@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow};
 
-
-
 #[derive(FromRow, Deserialize, Serialize)]
 pub struct GetClassListId {
     pub classlistid: String,
