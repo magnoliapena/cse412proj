@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 //usage
 use crate::AppState;
+use crate::api::class_list::create_classlist_for_user;
 use actix_web::{
     get, post,
     web::{Data, Json, Path, Query},
@@ -12,6 +13,7 @@ use reqwest::header::AUTHORIZATION;
 use serde::{Deserialize, Serialize};
 use sqlx::{self, FromRow};
 use uuid::Uuid;
+
 
 //schemas
 #[derive(Serialize, FromRow)] //class table (contains all classes at ASU)
@@ -82,20 +84,6 @@ pub async fn get_user(state: Data<AppState>, path: Path<i32>) -> impl Responder 
     }
 }
 
-#[get("/user/{userid}/wishlist")] //get entire class list of a user
-pub async fn get_wishlist(state: Data<AppState>, path: Path<i32>) -> impl Responder {
-    let userid: i32 = path.into_inner();
-    match sqlx::query_as::<_, WishList>(
-        "SELECT * from class_list, wishlist\
-    WHERE wishlist.userid = $1 and wishlist.classlistid = class_list.classlistid",
-    )
-    .fetch_all(&state.db)
-    .await
-    {
-        Ok(wishlist) => HttpResponse::Ok().json(wishlist),
-        Err(_) => HttpResponse::NotFound().json("Wishlist doesn't exist"),
-    }
-}
 
 //CLASS GET REQUESTS
 #[get("/class/{classid}")] //get single class from class id
@@ -173,7 +161,7 @@ pub async fn create_account(state: Data<AppState>, body: Json<CreateUser>) -> im
     let id = Uuid::new_v4();
     match sqlx::query_as::<_, User>(
         "INSERT INTO asu_user (userid, password, username, email, location, major)\
-            VALUES ($1, $2, $3, $4, $5) RETURNING userid, password, username, email, location, major",
+            VALUES ($1, $2, $3, $4, $5, $6) RETURNING userid, password, username, email, location, major",
     )
     .bind(id.to_string())
     .bind(body.password.to_string())
@@ -184,7 +172,11 @@ pub async fn create_account(state: Data<AppState>, body: Json<CreateUser>) -> im
     .fetch_one(&state.db)
     .await
     {
-        Ok(user) => HttpResponse::Ok().json(user),
+        Ok(user) => {
+
+            create_classlist_for_user(state.clone(), id.to_string()).await;
+            HttpResponse::Ok().json(user)
+        }
         Err(_) => HttpResponse::InternalServerError().json("Failed to create user"),
     }
 }
@@ -230,29 +222,6 @@ pub struct AddToWishlist {
     term: i32,
 }
 
-#[post("/user/{userid}/wishlist")] //post wishlist
-pub async fn post_wishlist(
-    state: Data<AppState>,
-    path: Path<i32>,
-    body: Json<CreateWishList>,
-) -> impl Responder {
-    let id = path.into_inner();
-    match sqlx::query_as::<_, WishList>(
-        "INSERT INTO wishlist (userid, classlistid, priority_ranking, added_date)\
-         VALUES($1, $2, $3, $4) RETURNING userid, classlistid, priority_ranking, added_date",
-    )
-    .bind(body.userid.to_string())
-    .bind(body.classlistid.to_string())
-    .bind(body.priority_ranking.to_string())
-    .bind(body.added_date.to_string())
-    .bind(id)
-    .fetch_one(&state.db)
-    .await
-    {
-        Ok(wishlist) => HttpResponse::Ok().json(wishlist),
-        Err(_) => HttpResponse::InternalServerError().json("Failed to create wishlist"),
-    }
-}
 
 #[derive(Serialize, FromRow, Debug)]
 struct ClassInfo {

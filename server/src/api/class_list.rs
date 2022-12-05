@@ -6,6 +6,7 @@ use actix_web::{
 };
 use serde::Deserialize;
 use sqlx;
+use uuid::Uuid;
 
 use crate::api::common::{AddToWishlist, GetClassListId, ClassInfo};
 
@@ -199,5 +200,24 @@ pub async fn delete_from_takenlist(state: Data<AppState>, body: Json<AddToWishli
             }
         }
         Err(_) => HttpResponse::InternalServerError().json("Failed to get classlistid"),
+    }
+}
+
+
+pub async fn create_classlist_for_user(state: Data<AppState>, userid: String) {
+    let class_list_id = Uuid::new_v4();
+    match sqlx::query("INSERT INTO class_list (ClassListId, Term) VALUES ($1, $2);").bind(class_list_id.to_string()).bind(2214).execute(&state.db).await{
+        Ok(_) => println!("created class_list"),
+        Err(e) => println!("could not create class list when creating user account because of {} with userid {}", e, userid.to_string())
+    }
+
+    match sqlx::query("INSERT INTO wishlist (UserId, ClassListId) VALUES ($1, $2);").bind(userid.clone()).bind(class_list_id.to_string()).execute(&state.db).await{
+        Ok(_) => println!("created wishlist for user {}", userid.clone()),
+        Err(e) => println!("could not create class list when creating user account because of {} with userid {}", e, userid.to_string())
+    }
+
+    match sqlx::query("INSERT INTO takenlist (UserId, ClassListId) VALUES ($1, $2);").bind(userid.clone()).bind(class_list_id.to_string()).execute(&state.db).await{
+        Ok(_) => println!("created takenlist for user {}", userid.clone()),
+        Err(e) => println!("could not create class list when creating user account because of {} with userid {}", e, userid.to_string())
     }
 }
