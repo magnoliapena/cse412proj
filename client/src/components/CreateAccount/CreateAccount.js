@@ -30,10 +30,7 @@ const CreateAccount = () => {
     fetch('http://98.161.210.47:8080/api/create_account', request)
       .then(response => response.json())
       .then(resData => {
-        console.log(resData);
-        // const { username, userid } = data
         setUser(resData)
-        // navigate('/profile/info')
       })
   }
 

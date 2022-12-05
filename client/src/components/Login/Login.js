@@ -25,10 +25,7 @@ const Login = () => {
     fetch('http://98.161.210.47:8080/api/login', request)
       .then(response => response.json())
       .then(resData => {
-        // const { username, userid } = data
-        // console.log(resData)
         setUser(resData)
-        // navigate('/profile/info')
       })
   }
 
